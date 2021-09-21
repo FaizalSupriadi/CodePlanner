@@ -1,7 +1,7 @@
-import example
+import myParser
 
 while True:
     text = input('CodePlanner > ')
-    result, error = example.run('<stdin>', text)
+    result, error = myParser.run('<stdin>', text)
     if error: print(error.as_string())
     else: print(result)

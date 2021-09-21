@@ -38,17 +38,17 @@ class Position:
         return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
 
 class TokenTypes():
-        TT_INT		    = 'INT'
-        TT_FLOAT        = 'FLOAT'
-        TT_PLUS         = 'PLUS'
-        TT_MINUS        = 'MINUS'
-        TT_MUL          = 'MUL'
-        TT_DIV          = 'DIV'
-        TT_LPAREN       = 'LPAREN'
-        TT_RPAREN       = 'RPAREN'
-        TT_SEMICOLON    = 'SEMICOLON'
-        TT_LCURLY       = 'LCURLY'
-        TT_RCURLY       = 'RCURLY'
+    TT_INT		    = 'INT'
+    TT_FLOAT        = 'FLOAT'
+    TT_PLUS         = 'PLUS'
+    TT_MINUS        = 'MINUS'
+    TT_MUL          = 'MUL'
+    TT_DIV          = 'DIV'
+    TT_LPAREN       = 'LPAREN'
+    TT_RPAREN       = 'RPAREN'
+    TT_SEMICOLON    = 'SEMICOLON'
+    TT_LCURLY       = 'LCURLY'
+    TT_RCURLY       = 'RCURLY'
 
 class Token:
     def __init__(self, type_, value=None):

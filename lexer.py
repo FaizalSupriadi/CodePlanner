@@ -1,5 +1,4 @@
-
-
+import string
 
 class Error:
     def __init__(self, pos_start, pos_end, error_name, details):
@@ -17,6 +16,10 @@ class IllegalCharError(Error):
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Illegal Character', details)
 
+class InvalidSyntaxError(Error):
+		def __init__(self, pos_start, pos_end, details=''):
+				super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
+
 class Position:
     def __init__(self, idx, ln, col, fn, ftxt):
         self.idx = idx
@@ -25,7 +28,7 @@ class Position:
         self.fn = fn
         self.ftxt = ftxt
 
-    def advance(self, current_char):
+    def advance(self, current_char=None):
         self.idx += 1
         self.col += 1
 
@@ -38,22 +41,34 @@ class Position:
     def copy(self):
         return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
 
+class TokenTypes():
+    TT_INT		    = 'INT'
+    TT_FLOAT        = 'FLOAT'
+    TT_PLUS         = 'PLUS'
+    TT_MINUS        = 'MINUS'
+    TT_MUL          = 'MUL'
+    TT_DIV          = 'DIV'
+    TT_LPAREN       = 'LPAREN'
+    TT_RPAREN       = 'RPAREN'
+    TT_SEMICOLON    = 'SEMICOLON'
+    TT_LCURLY       = 'LCURLY'
+    TT_RCURLY       = 'RCURLY'
+    TT_EOF          = 'EOF'
 
-TT_INT		= 'INT'
-TT_FLOAT    = 'FLOAT'
-TT_PLUS     = 'PLUS'
-TT_MINUS    = 'MINUS'
-TT_MUL      = 'MUL'
-TT_DIV      = 'DIV'
-TT_LPAREN   = 'LPAREN'
-TT_RPAREN   = 'RPAREN'
-TT_TEST     = 'LETTER'
 
 class Token:
-    def __init__(self, type_, value=None):
+    def __init__(self, type_, value=None, pos_start=None, pos_end=None):
         self.type = type_
         self.value = value
-    
+
+        if pos_start:
+            self.pos_start = pos_start.copy()
+            self.pos_end = pos_start.copy()
+            self.pos_end.advance()
+             
+        if pos_end:
+            self.pos_end = pos_end
+
     def __repr__(self):
         if self.value: return f'{self.type}:{self.value}'
         return f'{self.type}'
@@ -67,7 +82,7 @@ class Lexer:
         self.current_char = None
         self.advance()
         self.digits = '0123456789'
-        self.letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'    
+        self.letters = string.ascii_letters  
     
     def advance(self):
         self.pos.advance(self.current_char)
@@ -81,55 +96,79 @@ class Lexer:
         elif self.current_char in self.digits:
             tokens.append(self.make_number())
         elif self.current_char == '+':
-            tokens.append(Token(TT_PLUS))
+            tokens.append(Token(TokenTypes.TT_PLUS, pos_start = self.pos))
             self.advance()
         elif self.current_char in self.letters:
-            tokens.append(Token(TT_TEST))
+            tokens.append(self.make_text())
             self.advance()    
         elif self.current_char == '-':
-            tokens.append(Token(TT_MINUS))
+            tokens.append(Token(TokenTypes.TT_MINUS, pos_start = self.pos))
             self.advance()
         elif self.current_char == '*':
-            tokens.append(Token(TT_MUL))
+            tokens.append(Token(TokenTypes.TT_MUL, pos_start = self.pos))
             self.advance()
         elif self.current_char == '/':
-            tokens.append(Token(TT_DIV))
+            tokens.append(Token(TokenTypes.TT_DIV, pos_start = self.pos))
             self.advance()
         elif self.current_char == '(':
-            tokens.append(Token(TT_LPAREN))
+            tokens.append(Token(TokenTypes.TT_LPAREN, pos_start = self.pos))
             self.advance()
         elif self.current_char == ')':
-            tokens.append(Token(TT_RPAREN))
+            tokens.append(Token(TokenTypes.TT_RPAREN, pos_start = self.pos))
+            self.advance()
+        elif self.current_char == '{':
+            tokens.append(Token(TokenTypes.TT_LCURLY, pos_start = self.pos))
+            self.advance()
+        elif self.current_char == '}':
+            tokens.append(Token(TokenTypes.TT_RCURLY, pos_start = self.pos))
+            self.advance()
+        elif self.current_char == ';':
+            tokens.append(Token(TokenTypes.TT_SEMICOLON, pos_start = self.pos))
             self.advance()
         else:
             pos_start = self.pos.copy()
             char = self.current_char
             self.advance()
             return [], IllegalCharError(pos_start, self.pos, "'" + char + "'")
-
         return self.make_tokens(tokens)
+        
+    def clean_tokens(self, tokens=[]):
+        list(filter(None, tokens))
+        tokens.append(Token(TokenTypes.TT_EOF, pos_start = self.pos))
+        return tokens
 
-    def make_number(self):
-        num_str = ''
-        dot_count = 0
-
-        while self.current_char != None and self.current_char in self.digits + '.':
+    def make_text(self, text = ''):
+        if self.current_char != None and self.current_char in self.letters:
+            text += self.current_char
+            self.advance()
+            return self.make_text(text)
+        if(text == 'and'):
+            return Token(TokenTypes.TT_PLUS, pos_start = self.pos)
+        elif(text == 'returns'):
+            return Token(TokenTypes.TT_MINUS, pos_start = self.pos)
+        elif(text == 'shortcuts'):
+            return Token(TokenTypes.TT_MUL, pos_start = self.pos)
+        elif(text == 'ghostrides'):
+            return Token(TokenTypes.TT_DIV, pos_start = self.pos)
+        
+    def make_number(self, num_str = '', dot_count = 0, pos_start=None ):
+        if(pos_start == None):
+            pos_start = self.pos.copy()
+        if self.current_char != None and self.current_char in self.digits + '.':
             if self.current_char == '.':
-                if dot_count == 1: break
-                dot_count += 1
-                num_str += '.'
+                if dot_count == 0: 
+                    dot_count += 1
+                    num_str += '.'
+                    self.advance()
+                    return self.make_number(num_str, dot_count, pos_start)
             else:
                 num_str += self.current_char
-            self.advance()
+                self.advance()
+                return self.make_number(num_str, dot_count, pos_start)
 
         if dot_count == 0:
-            return Token(TT_INT, int(num_str))
+            return Token(TokenTypes.TT_INT, int(num_str), pos_start, self.pos)
         else:
-            return Token(TT_FLOAT, float(num_str))
+            return Token(TokenTypes.TT_FLOAT, float(num_str), pos_start, self.pos)
 
 
-def run(fn, text):
-    lexer = Lexer(fn, text)
-    tokens, error = lexer.make_tokens([])
-
-    return tokens, error
