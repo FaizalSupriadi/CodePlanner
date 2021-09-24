@@ -1,7 +1,8 @@
-from lexer import TokenTypes
-from lexer import Lexer
-from lexer import InvalidSyntaxError
-
+from example import TokenTypes
+from example import InvalidSyntaxError
+from example import Position
+from example import make_tokens
+from example import clean_tokens
 class NumberNode:
     def __init__(self, tok) -> None:
         self.tok = tok
@@ -119,12 +120,12 @@ class Parser:
 
         return res.succes(left)
 
-def run(fn, text):
-    lexer = Lexer(fn, text)
-    tokens, error = lexer.make_tokens([])
+def run(fn, text:str):
+    pos = Position(0, 0, 0, fn, text)
+    tokens, error = make_tokens([],pos, text)
     if error: return None, error
-    tokens = lexer.clean_tokens(tokens);
-     
+    tokens = clean_tokens(tokens)
+
     parser = Parser(tokens)
     ast = parser.parse()
     return ast.node, ast.error

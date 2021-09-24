@@ -1,5 +1,5 @@
 import string
-
+from typing import Union
 class Error:
     def __init__(self, pos_start, pos_end, error_name, details):
         self.pos_start = pos_start
@@ -17,14 +17,26 @@ class IllegalCharError(Error):
         super().__init__(pos_start, pos_end, 'Illegal Character', details)
 
 class Position:
-    def __init__(self, idx, ln, col, fn, ftxt):
+    def __init__(self, idx=0, ln=0, col=0, fn='', ftxt=''):
         self.idx = idx
         self.ln = ln
         self.col = col
+
+        self.prevIdx = idx
+        self.prevLn = ln
+        self.prevCol = col
+
         self.fn = fn
         self.ftxt = ftxt
+    
+    def __repr__(self) -> str:
+        return f'{self.idx}{self.ln}{self.col}'
 
-    def advance(self, current_char):
+    def advance(self, current_char:str=None):
+        self.prevIdx = self.idx
+        self.prevLn = self.ln
+        self.prevCol = self.col
+
         self.idx += 1
         self.col += 1
 
@@ -33,6 +45,9 @@ class Position:
             self.col = 0
 
         return self
+    
+    def copyPrev(self):
+        return Position(self.prevIdx, self.prevLn, self.prevCol, self.fn, self.ftxt)
 
     def copy(self):
         return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
@@ -49,6 +64,7 @@ class TokenTypes():
     TT_SEMICOLON    = 'SEMICOLON'
     TT_LCURLY       = 'LCURLY'
     TT_RCURLY       = 'RCURLY'
+    TT_EOF          = 'EOF'
 
 class Token:
     def __init__(self, type_, value=None):
@@ -59,104 +75,90 @@ class Token:
         if self.value: return f'{self.type}:{self.value}'
         return f'{self.type}'
 
+digits = '0123456789'
+letters = string.ascii_letters
 
-class Lexer:
-    def __init__(self, fn, text):
-        self.fn = fn
-        self.text = text
-        self.pos = Position(-1, 0, -1, fn, text)
-        self.current_char = None
-        self.advance()
-        self.digits = '0123456789'
-        self.letters = string.ascii_letters  
+def make_tokens(tokens:list, curr_pos:Position, text:str) -> Union[list, Error]:
+    print(curr_pos.idx)
+    curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
+    # print('idx', curr_pos.idx, 'curr char',curr_char)
+
+    if curr_char == None:
+        return tokens, None
+    elif text[curr_pos.idx] in ' \t':
+        pass
+    elif curr_char in digits:
+        token, pos = make_number(curr_pos,text)
+        tokens.append(token)
+        return make_tokens(tokens, pos, text) 
+    elif curr_char in letters:
+        token, pos = make_text(curr_pos,text)
+        tokens.append(token)
+        return make_tokens(tokens, pos, text)
+    elif curr_char == '+':
+        tokens.append(Token(TokenTypes.TT_PLUS))
+    elif curr_char == '-':
+        tokens.append(Token(TokenTypes.TT_MINUS))
+    elif curr_char == '*':
+        tokens.append(Token(TokenTypes.TT_MUL))
+    elif curr_char == '/':
+        tokens.append(Token(TokenTypes.TT_DIV))
+    elif curr_char == '(':
+        tokens.append(Token(TokenTypes.TT_LPAREN))
+    elif curr_char == ')':
+        tokens.append(Token(TokenTypes.TT_RPAREN))
+    elif curr_char == '{':
+        tokens.append(Token(TokenTypes.TT_LCURLY))
+    elif curr_char == '}':
+        tokens.append(Token(TokenTypes.TT_RCURLY))
+    elif curr_char == ';':
+        tokens.append(Token(TokenTypes.TT_SEMICOLON))
+
+        # pos_start = self.pos.copy()
+        # char = current_char
+        # return [], IllegalCharError(pos_start, self.pos, "'" + char + "'")
+
+    return make_tokens(tokens, curr_pos.advance(curr_char), text) 
     
-    def advance(self):
-        self.pos.advance(self.current_char)
-        self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
+def clean_tokens(tokens=[]) -> list:
+    return list(filter(None, tokens))
 
-    def make_tokens(self, tokens):
-        if self.current_char == None:
-            return tokens, None
-        elif self.current_char in ' \t':
-            self.advance()
-        elif self.current_char in self.digits:
-            tokens.append(self.make_number())
-        elif self.current_char == '+':
-            tokens.append(Token(TokenTypes.TT_PLUS))
-            self.advance()
-        elif self.current_char in self.letters:
-            tokens.append(self.make_text())
-            self.advance()    
-        elif self.current_char == '-':
-            tokens.append(Token(TokenTypes.TT_MINUS))
-            self.advance()
-        elif self.current_char == '*':
-            tokens.append(Token(TokenTypes.TT_MUL))
-            self.advance()
-        elif self.current_char == '/':
-            tokens.append(Token(TokenTypes.TT_DIV))
-            self.advance()
-        elif self.current_char == '(':
-            tokens.append(Token(TokenTypes.TT_LPAREN))
-            self.advance()
-        elif self.current_char == ')':
-            tokens.append(Token(TokenTypes.TT_RPAREN))
-            self.advance()
-        elif self.current_char == '{':
-            tokens.append(Token(TokenTypes.TT_LCURLY))
-            self.advance()
-        elif self.current_char == '}':
-            tokens.append(Token(TokenTypes.TT_RCURLY))
-            self.advance()
-        elif self.current_char == ';':
-            tokens.append(Token(TokenTypes.TT_SEMICOLON))
-            self.advance()
+def make_text(curr_pos:Position = Position(),text:str = '',keyword:str = '') -> Union[Token, Position]:
+    curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
+    if curr_char != None and curr_char in letters:
+        keyword += curr_char
+        return make_text(curr_pos.advance(curr_char),text,keyword)
+    
+    if(keyword == 'and'):
+        return Token(TokenTypes.TT_PLUS), curr_pos
+    elif(keyword == 'returns'):
+        return Token(TokenTypes.TT_MINUS), curr_pos
+    elif(keyword == 'shortcuts'):
+        return Token(TokenTypes.TT_MUL), curr_pos
+    elif(keyword == 'ghostrides'):
+        return Token(TokenTypes.TT_DIV), curr_pos
+    else:
+        return None, curr_pos
+    
+def make_number(curr_pos:Position = Position(), text:str='', num_str:str = '', dot_count:int = 0 ) -> Union[Token, Position]:
+    curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
+    if curr_char != None and curr_char in digits + '.':
+        if curr_char == '.':
+            if dot_count == 0: 
+                dot_count += 1
+                num_str += '.'
+                return make_number(curr_pos.advance(curr_char),text,num_str, dot_count)
         else:
-            pos_start = self.pos.copy()
-            char = self.current_char
-            self.advance()
-            return [], IllegalCharError(pos_start, self.pos, "'" + char + "'")
+            num_str += curr_char
+            return make_number(curr_pos.advance(curr_char),text,num_str, dot_count)
 
-        return self.make_tokens(tokens)
-        
-    def clean_tokens(self, tokens=[]):
-        return list(filter(None, tokens))
+    if dot_count == 0:
+        return Token(TokenTypes.TT_INT, int(num_str)), curr_pos
+    else:
+        return Token(TokenTypes.TT_FLOAT, float(num_str)), curr_pos
 
-    def make_text(self, text = ''):
-        if self.current_char != None and self.current_char in self.letters:
-            text += self.current_char
-            self.advance()
-            return self.make_text(text)
-        if(text == 'and'):
-            return Token(TokenTypes.TT_PLUS)
-        elif(text == 'returns'):
-            return Token(TokenTypes.TT_MINUS)
-        elif(text == 'shortcuts'):
-            return Token(TokenTypes.TT_MUL)
-        elif(text == 'ghostrides'):
-            return Token(TokenTypes.TT_DIV)
-        
-    def make_number(self, num_str = '', dot_count = 0 ):
-        if self.current_char != None and self.current_char in self.digits + '.':
-            if self.current_char == '.':
-                if dot_count == 0: 
-                    dot_count += 1
-                    num_str += '.'
-                    self.advance()
-                    return self.make_number(num_str, dot_count)
-            else:
-                num_str += self.current_char
-                self.advance()
-                return self.make_number(num_str, dot_count)
-
-        if dot_count == 0:
-            return Token(TokenTypes.TT_INT, int(num_str))
-        else:
-            return Token(TokenTypes.TT_FLOAT, float(num_str))
-
-
-def run(fn, text):
-    lexer = Lexer(fn, text)
-    tokens, error = lexer.make_tokens([])
-    tokens = lexer.clean_tokens(tokens);
+def run(fn, text:str):
+    pos = Position(0, 0, 0, fn, text)
+    tokens, error = make_tokens([], pos, text)
+    tokens = clean_tokens(tokens)
     return tokens, error
