@@ -15,7 +15,10 @@ class Error:
 class IllegalCharError(Error):
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Illegal Character', details)
-
+class InvalidSyntaxError(Error):
+		def __init__(self, pos_start, pos_end, details=''):
+				super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
+                
 class Position:
     def __init__(self, idx=0, ln=0, col=0, fn='', ftxt=''):
         self.idx = idx
@@ -79,7 +82,6 @@ digits = '0123456789'
 letters = string.ascii_letters
 
 def make_tokens(tokens:list, curr_pos:Position, text:str) -> Union[list, Error]:
-    print(curr_pos.idx)
     curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
     # print('idx', curr_pos.idx, 'curr char',curr_char)
 
