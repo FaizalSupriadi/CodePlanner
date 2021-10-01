@@ -159,8 +159,9 @@ def make_number(curr_pos:Position = Position(), text:str='', num_str:str = '', d
     else:
         return Token(TokenTypes.TT_FLOAT, float(num_str)), curr_pos
 
-def run(fn, text:str):
+def run(fn:str='', text:str=''):
     pos = Position(0, 0, 0, fn, text)
     tokens, error = make_tokens([], pos, text)
+    if error: return None, error
     tokens = clean_tokens(tokens)
     return tokens, error

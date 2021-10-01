@@ -1,131 +1,116 @@
-from example import TokenTypes
-from example import InvalidSyntaxError
-from example import Position
-from example import make_tokens
-from example import clean_tokens
-class NumberNode:
-    def __init__(self, tok) -> None:
-        self.tok = tok
+from typing import List
+from myLexer import Token
+from myLexer import TokenTypes
+from myLexer import Position
+from myLexer import make_tokens
+from myLexer import clean_tokens
+import myLexer
 
-    def __repr__(self) -> str:
-        return f'{self.tok}'
-    
-class BinOpNode:
-    def __init__(self, left_node, op_tok, right_node) -> None:
+
+class Node:
+    def __init__(self, tok: Token = None, left_node: any = None, op_tok: Token = None, right_node: any = None, node: any = None) -> None:
+        self.tok = tok
         self.left_node = left_node
         self.op_tok = op_tok
         self.right_node = right_node
+        self.node = node
+
+    def __repr__(self) -> str:
+        return f'{self.tok}'
+
+
+class NumberNode(Node):
+    def __init__(self, tok: Token) -> None:
+        super().__init__(tok=tok)
+
+    def __repr__(self) -> str:
+        return f'{self.tok}'
+
+
+class BinOpNode(Node):
+    def __init__(self, left_node: any, op_tok: Token, right_node: any) -> None:
+        super().__init__(left_node=left_node, op_tok=op_tok, right_node=right_node)
 
     def __repr__(self) -> str:
         return f'({self.left_node}, {self.op_tok}, {self.right_node})'
 
-class UnaryOpNode:
-	def __init__(self, op_tok, node):
-		self.op_tok = op_tok
-		self.node = node
 
-	def __repr__(self):
-		return f'({self.op_tok}, {self.node})'
+class UnaryOpNode(Node):
+    def __init__(self, op_tok: Token, node: any) -> None:
+        super().__init__(op_tok=op_tok, node=node)
 
-class ParseResult:
-    def __init__(self) -> None:
-        self.error = None
-        self.node = None
+    def __repr__(self) -> str:
+        return f'({self.op_tok}, {self.node})'
 
-    def register(self,res):
-        if isinstance(res, ParseResult):
-            if res.error:self.error = res.error
-            return res.node
 
-    def succes(self, node):
-        self.node = node
-        return self
+def parse(tokens: List[Token] = []) -> tuple:
+    expr, _ = expression(tokens)
+    return expr
 
-    def failure(self, error):
-        self.error = error
-        return self
-    
 
-class Parser:
-    def __init__(self, tokens) -> None:
-        self.tokens = tokens
-        self.tok_idx = -1
-        self.advance()
-    
-    def advance(self):
-        self.tok_idx += 1
-        if self.tok_idx < len(self.tokens):
-            self.current_tok = self.tokens[self.tok_idx]
-        return self.current_tok
+def expression(tokens: List[Token] = [], idx: int = 0) -> tuple:
+    #print('expr1')
+    exp, i = bin_op_left(
+        term, (TokenTypes.TT_PLUS, TokenTypes.TT_MINUS), tokens, idx)
+    #print('expr', exp)
+    return exp, i
 
-    def parse(self):
-        res = self.expr()
-        if not res.error and self.current_tok.type != TokenTypes.TT_EOF:
-            return res.failure(InvalidSyntaxError(
-				self.current_tok.pos_start, self.current_tok.pos_end,
-				"Expected '+', '-', '*' or '/'"
-			))
-        return res
 
-    def factor(self):
-        res = ParseResult()
-        tok = self.current_tok
+def term(tokens: List[Token] = [], idx: int = 0) -> tuple:
+    #print('term1')
+    ter, i = bin_op_left(
+        factor, (TokenTypes.TT_MUL, TokenTypes.TT_DIV), tokens, idx)
+    #print('term', ter)
+    return ter, i
 
-        if tok.type in (TokenTypes.TT_PLUS, TokenTypes.TT_MINUS):
-            res.register(self.advance())
-            factor = res.register(self.factor())
-            if res.error: return res
-            return res.succes(UnaryOpNode(tok, factor))
 
-        elif tok.type in (TokenTypes.TT_INT, TokenTypes.TT_FLOAT):
-            res.register(self.advance())
-            return res.succes(NumberNode(tok))
+def factor(tokens: List[Token] = [], idx: int = 0) -> tuple:
+    #print('facts')
+    curr_tok: Token = tokens[idx] if idx < len(tokens) else None
+    if curr_tok is None:
+        return None, idx+1
 
-        elif tok.type == TokenTypes.TT_LPAREN:
-            res.register(self.advance())
-            expr = res.register(self.expr())
-            if res.error: return res
-            if self.current_tok.type == TokenTypes.TT_RPAREN:
-                res.register(self.advance())
-                return res.succes(expr)
-            else:
-                return res.failure(InvalidSyntaxError(
-                    self.current_tok.pos_start, self.current_tok.pos_end,
-                    "Expected ')'"
-                ))
+    if curr_tok.type in (TokenTypes.TT_PLUS, TokenTypes.TT_MINUS):
+        facts, i = factor(tokens, idx+1)
+        return UnaryOpNode(curr_tok, facts), i
 
-        return res.failure(InvalidSyntaxError(
-            tok.pos_start, tok.pos_end,
-            "Expected int or float"
-        ))
+    elif curr_tok.type in (TokenTypes.TT_INT, TokenTypes.TT_FLOAT):
+        return NumberNode(curr_tok), idx+1
 
-    def term(self):
-        return self.bin_op(self.factor, (TokenTypes.TT_MUL, TokenTypes.TT_DIV))
+    elif curr_tok.type == TokenTypes.TT_LPAREN:
+        expr, i = expression(tokens, idx+1)
+        #print('fact_exp', expr)
+        next_tok: Token = tokens[i] if i < len(tokens) else None
+        if next_tok == None:
+            return None, i
+        if next_tok.type == TokenTypes.TT_RPAREN:
+            return expr, i+1
+    return None, idx
 
-    def expr(self ):
-        return self.bin_op(self.term, (TokenTypes.TT_PLUS, TokenTypes.TT_MINUS))
 
-    def bin_op(self, func, ops):
-        res = ParseResult()
-        left = res.register(func())
-        if res.error: return res
+def bin_op_left(func: callable, ops: tuple, tokens: List[Token] = [], idx: int = 0) -> tuple:
+    funct, i = func(tokens, idx)
+    #print('bin_left', 'idx', idx, 'f', func, 'left', funct, 'i', i)
+    return bin_op_right(func, ops, tokens, i, funct)
 
-        while self.current_tok.type in ops:
-            op_tok = self.current_tok
-            res.register(self.advance())
-            right = res.register(func())
-            if res.error: return res
 
-            left = BinOpNode(left, op_tok, right)
+def bin_op_right(func: callable, ops: tuple, tokens: List[Token], idx: int, left: any) -> tuple:
+    #print('bin_op_right', tokens, idx)
+    curr_tok: Token = tokens[idx] if idx < len(tokens) else None
+    if curr_tok is None:
+        return left, idx
+    #print('ops', ops)
+    if curr_tok.type in ops:
+        op_tok = curr_tok
+        right, i = func(tokens, idx+1)
+        #print('right', right, 'i', i)
+        return bin_op_right(func, ops, tokens, i, BinOpNode(left, op_tok, right))
+    return left, idx
 
-        return res.succes(left)
 
-def run(fn, text:str):
-    pos = Position(0, 0, 0, fn, text)
-    tokens, error = make_tokens([],pos, text)
-    if error: return None, error
-    tokens = clean_tokens(tokens)
-
-    parser = Parser(tokens)
-    ast = parser.parse()
-    return ast.node, ast.error
+def run(fn: str = '', text: str = '') -> tuple:
+    tokens, error = myLexer.run(fn, text)
+    if error:
+        return None, error
+    ast = parse(tokens)
+    return ast, None
