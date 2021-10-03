@@ -1,5 +1,6 @@
 import string
 from typing import Union
+
 class Error:
     def __init__(self, pos_start, pos_end, error_name, details):
         self.pos_start = pos_start
@@ -48,6 +49,10 @@ class Position:
             self.col = 0
 
         return self
+
+    def goTo(self, idx):
+        self.idx = idx
+        return self
     
     def copyPrev(self):
         return Position(self.prevIdx, self.prevLn, self.prevCol, self.fn, self.ftxt)
@@ -69,14 +74,21 @@ class TokenTypes():
     TT_RCURLY       = 'RCURLY'
     TT_IDENTIFIER	= 'IDENTIFIER'
     TT_KEYWORD		= 'KEYWORD'
+    TT_EE           = 'EE'
+    TT_NE           = 'NE'
+    TT_NOT          = 'NOT'
+    TT_LT           = 'LT'
+    TT_GT           = 'GT'
+    TT_LTE          = 'LTE'
+    TT_GTE          = 'GTE'
     TT_EQ           = 'EQ'
     TT_EOF          = 'EOF'
 
-    KEYWORDS = ['VEHICLE']
+    KEYWORDS = ['VEHICLE', 'AND', 'OR', 'NOT']
 
 
 class Token:
-    def __init__(self, type_, value=None):
+    def __init__(self, type_=None, value=None):
         self.type = type_
         self.value = value
     
@@ -94,7 +106,6 @@ LETTERS_DIGITS = LETTERS + DIGITS
 def make_tokens(tokens:list, curr_pos:Position, text:str) -> Union[list, Error]:
     curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
     # print('idx', curr_pos.idx, 'curr char',curr_char)
-
     if curr_char == None:
         return tokens, None
     elif text[curr_pos.idx] in ' \t':
@@ -134,9 +145,13 @@ def clean_tokens(tokens=[]) -> list:
 def make_identifier(curr_pos:Position = Position(),text:str = '',keyword:str = '') -> Union[Token, Position]:
     curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
     if curr_char != None and curr_char in LETTERS_DIGITS:
+
         keyword += curr_char
+        if keyword[0] in DIGITS:
+            return Token(), curr_pos.goTo(curr_pos.idx-len(keyword))
+        #print(keyword)
         return make_identifier(curr_pos.advance(curr_char),text,keyword)
-    
+    print(keyword)
     if(keyword == 'and'):
         return Token(TokenTypes.TT_PLUS), curr_pos
     elif(keyword == 'returns'):
@@ -146,10 +161,34 @@ def make_identifier(curr_pos:Position = Position(),text:str = '',keyword:str = '
     elif(keyword == 'ghostrides'):
         return Token(TokenTypes.TT_DIV), curr_pos
     elif(keyword == 'travels'):
-        return Token(TokenTypes.TT_EQ), curr_pos
+        return make_equals(curr_pos,text)
+    elif(keyword == 'less'):
+        return Token(TokenTypes.TT_LT), curr_pos
+    elif(keyword == 'more'):
+        return Token(TokenTypes.TT_GT), curr_pos
+    elif(keyword == 'cancelled'):
+        return Token(TokenTypes.TT_NOT), curr_pos
     else:
         tok_type = TokenTypes.TT_KEYWORD if keyword in TokenTypes.KEYWORDS else TokenTypes.TT_IDENTIFIER
         return Token(tok_type, keyword), curr_pos
+
+def make_equals(curr_pos:Position = Position(), text:str=''):
+    curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
+    token, new_pos = make_identifier(curr_pos.advance(curr_char),text)
+    if token.type == 'KEYWORD':
+        return Token(TokenTypes.TT_EQ), curr_pos.goTo(curr_pos.idx - len(token.type)) 
+    if token.type == 'EQ':
+        tok_type = TokenTypes.TT_EE
+    elif token.type == 'LT':
+        tok_type = TokenTypes.TT_LTE
+    elif token.type == 'GT':
+        tok_type = TokenTypes.TT_GTE
+    elif token.type == 'NOT':
+        tok_type = TokenTypes.TT_NE
+    else:
+        tok_type = TokenTypes.TT_EQ
+        return Token(tok_type), curr_pos
+    return Token(tok_type), new_pos
     
 def make_number(curr_pos:Position = Position(), text:str='', num_str:str = '', dot_count:int = 0 ) -> Union[Token, Position]:
     curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
