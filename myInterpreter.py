@@ -1,6 +1,6 @@
 from myLexer import Token
 import myParser
-from myParser import TokenTypes, BinOpNode, NumberNode, UnaryOpNode, Node, VarAccesNode, VarAssignNode
+from myParser import TokenTypes, BinOpNode, NumberNode, UnaryOpNode, Node, VarAccesNode, VarAssignNode, IfNode
 import functools
 
 
@@ -36,7 +36,7 @@ class SymbolTable:
 
 
 class Number:
-    def __init__(self, value):
+    def __init__(self, value=None):
         self.value = value
 
     def added_to(self, other):
@@ -91,6 +91,10 @@ class Number:
 
     def notted(self):
         return Number(1 if self.value == 0 else 0)
+    
+    def is_true(self):
+        return self.value != 0
+
     def __repr__(self):
         return str(self.value)
 
@@ -111,6 +115,9 @@ def visit(node:Node,symbol_table:SymbolTable) -> any:
     elif isinstance(node, VarAssignNode):
         #print('visit.VarAssignNode')
         return visit_VarAssignNode(node,symbol_table)
+    elif isinstance(node, IfNode):
+        #print('visit.IfNode')
+        return visit_IfNode(node,symbol_table)
     elif node == None:
         pass
 
@@ -124,6 +131,8 @@ def visit_NumberNode(node: Node,symbol_table:SymbolTable):
 
 def visit_BinOpNode(node: Node,symbol_table:SymbolTable):
     #print('llllll',type(node.left_node), node.right_node)
+    left:Number = Number()
+    right:Number = Number()
     left, _= visit(node.left_node,symbol_table)
     right,_= visit(node.right_node,symbol_table)
     #print('left', type(left), right)
@@ -177,13 +186,27 @@ def visit_VarAssignNode(node: Node,symbol_table:SymbolTable):
     value, new_symbol_table = visit(node.value_node, symbol_table)
     return value, new_symbol_table.insert(vehicle_name, value)
 
+def visit_IfNode(node, symbol_table:SymbolTable):
+        print('CASES',node.cases)
+        for condition, expr in node.cases:
+            print(condition, expr)
+            condition_value, symbol_table_1 = visit(condition, symbol_table)
 
+            if condition_value.is_true():
+                expr_value, symbol_table_2  =visit(expr, symbol_table_1)
+                return expr_value,symbol_table_2
+
+        if node.else_case:
+            else_value, symbol_table_2 = visit(node.else_case, symbol_table_1)
+            return else_value, symbol_table
+
+        return None,symbol_table
 
 def run(fn: str = '', text: str = '', symbol_table:SymbolTable= SymbolTable()):
     ast, _ = myParser.run(fn, text)
-    print('ast in inter',type(ast.right_node))
+    # print('ast in inter',type(ast.right_node))
     value, new_symbol_table = interpreter(ast, symbol_table)
     print('new', new_symbol_table)
-    #print('val',value)
-    #print('val.type',type(value))
+    print('val',value)
+    print('val.type',type(value))
     return value, None, new_symbol_table

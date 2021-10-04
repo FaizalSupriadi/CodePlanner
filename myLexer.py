@@ -84,7 +84,7 @@ class TokenTypes():
     TT_EQ           = 'EQ'
     TT_EOF          = 'EOF'
 
-    KEYWORDS = ['VEHICLE', 'AND', 'OR', 'NOT']
+    KEYWORDS = ['VEHICLE', 'AND', 'OR', 'NOT', 'IF', 'THEN', 'ELIF', 'ELSE']
 
 
 class Token:
@@ -176,7 +176,8 @@ def make_equals(curr_pos:Position = Position(), text:str=''):
     curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
     token, new_pos = make_identifier(curr_pos.advance(curr_char),text)
     if token.type == 'KEYWORD':
-        return Token(TokenTypes.TT_EQ), curr_pos.goTo(curr_pos.idx - len(token.type)) 
+        print('TOKEN AND TYPE',token, token.value, token.type)
+        return Token(TokenTypes.TT_EQ), curr_pos.goTo(curr_pos.idx - len(token.value)) 
     if token.type == 'EQ':
         tok_type = TokenTypes.TT_EE
     elif token.type == 'LT':
