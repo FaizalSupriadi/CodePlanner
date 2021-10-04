@@ -93,13 +93,13 @@ def if_expr(tokens: List[Token] = [], idx: int = 0):
             return None, idx
 
         expr, idx_2 = expression(tokens, idx_1+1)
-        print('exoreors',condition,expr, idx_1,)
+        print('exoreors',condition,expr, idx_1)
         cases.append((condition, expr))
         return if_expr_loop(tokens, idx_2, cases)
         
 
 def if_expr_loop(tokens, idx, cases=[]):
-    curr_tok: Token = tokens[idx] if idx < len(tokens) else None
+    curr_tok: Token = tokens[idx] if idx < len(tokens) else Token()
     print('CurrTOK',curr_tok)
     if curr_tok.matches(TokenTypes.TT_KEYWORD, 'ELIF'):
         condition, idx_1 = expression(tokens, idx+1)

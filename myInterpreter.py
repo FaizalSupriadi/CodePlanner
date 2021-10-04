@@ -40,7 +40,6 @@ class Number:
         self.value = value
 
     def added_to(self, other):
-        #print('other',other)
         if isinstance(other, Number):
             return Number(self.value + other.value)
 
@@ -126,20 +125,16 @@ def no_visit_method(node: Node):
 
 
 def visit_NumberNode(node: Node,symbol_table:SymbolTable):
-    #print('num',node)
     return Number(node.tok.value), symbol_table
 
 def visit_BinOpNode(node: Node,symbol_table:SymbolTable):
-    #print('llllll',type(node.left_node), node.right_node)
     left:Number = Number()
     right:Number = Number()
     left, _= visit(node.left_node,symbol_table)
     right,_= visit(node.right_node,symbol_table)
-    #print('left', type(left), right)
     print(node.op_tok.type)
     if node.op_tok.type == TokenTypes.TT_PLUS:
         result = left.added_to(right)
-        #print(result)
     elif node.op_tok.type == TokenTypes.TT_MINUS:
         result = left.subtracted_by(right)
     elif node.op_tok.type == TokenTypes.TT_MUL:
@@ -179,7 +174,6 @@ def visit_VarAccesNode(node: Node,symbol_table:SymbolTable):
 
     if not value:
         return None, symbol_table
-    #print('valueee',type(value))
     return value, symbol_table
 def visit_VarAssignNode(node: Node,symbol_table:SymbolTable):
     vehicle_name = node.var_name_tok.value
@@ -187,20 +181,25 @@ def visit_VarAssignNode(node: Node,symbol_table:SymbolTable):
     return value, new_symbol_table.insert(vehicle_name, value)
 
 def visit_IfNode(node, symbol_table:SymbolTable):
-        print('CASES',node.cases)
-        for condition, expr in node.cases:
-            print(condition, expr)
-            condition_value, symbol_table_1 = visit(condition, symbol_table)
 
-            if condition_value.is_true():
-                expr_value, symbol_table_2  =visit(expr, symbol_table_1)
-                return expr_value,symbol_table_2
+    condition, symbol_table_1 = IfNode_loop(node, symbol_table)
 
-        if node.else_case:
-            else_value, symbol_table_2 = visit(node.else_case, symbol_table_1)
-            return else_value, symbol_table
+    if condition == None and node.else_case:
+        else_value, symbol_table_2 = visit(node.else_case, symbol_table_1)
+        return else_value, symbol_table_2
 
-        return None,symbol_table
+    return condition, symbol_table_1
+def IfNode_loop(node:Node, symbol_table:SymbolTable, idx=0):
+    print('cases', node,len(node.cases))
+    if idx == len(node.cases):
+        return None, symbol_table
+    condition, expr = node.cases[idx]
+    condition_value, symbol_table_1 = visit(condition, symbol_table)
+
+    if condition_value.is_true():
+        expr_value, symbol_table_2  =visit(expr, symbol_table_1)
+        return expr_value,symbol_table_2
+    return IfNode_loop(node, symbol_table_1, idx+1)
 
 def run(fn: str = '', text: str = '', symbol_table:SymbolTable= SymbolTable()):
     ast, _ = myParser.run(fn, text)
