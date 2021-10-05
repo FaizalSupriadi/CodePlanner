@@ -103,21 +103,20 @@ DIGITS = '0123456789'
 LETTERS = string.ascii_letters
 LETTERS_DIGITS = LETTERS + DIGITS
 
+def add_token(token:Token, pos:Position, tokens:list) -> tuple:
+    tokens.append(token)
+    return tokens, pos
+
 def make_tokens(tokens:list, curr_pos:Position, text:str) -> Union[list, Error]:
-    curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
-    # print('idx', curr_pos.idx, 'curr char',curr_char)
+    curr_char = get_curr_char(text, curr_pos)
     if curr_char == None:
         return tokens, None
-    elif text[curr_pos.idx] in ' \t':
+    elif curr_char in ' \t':
         pass
     elif curr_char in DIGITS:
-        token, pos = make_number(curr_pos,text)
-        tokens.append(token)
-        return make_tokens(tokens, pos, text) 
+        return make_tokens(*add_token(*make_number(curr_pos,text), tokens), text) 
     elif curr_char in LETTERS:
-        token, pos = make_identifier(curr_pos,text)
-        tokens.append(token)
-        return make_tokens(tokens, pos, text)
+        return make_tokens(*add_token(*make_identifier(curr_pos,text),tokens), text)
     elif curr_char == '+':
         tokens.append(Token(TokenTypes.TT_PLUS))
     elif curr_char == '-':
@@ -143,15 +142,11 @@ def clean_tokens(tokens=[]) -> list:
     return list(filter(None, tokens))
 
 def make_identifier(curr_pos:Position = Position(),text:str = '',keyword:str = '') -> Union[Token, Position]:
-    curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
+    curr_char = get_curr_char(text, curr_pos)
+    if keyword != '' and keyword[0] in DIGITS:
+        return Token(), curr_pos.goTo(curr_pos.idx-len(keyword))
     if curr_char != None and curr_char in LETTERS_DIGITS:
-
-        keyword += curr_char
-        if keyword[0] in DIGITS:
-            return Token(), curr_pos.goTo(curr_pos.idx-len(keyword))
-        #print(keyword)
-        return make_identifier(curr_pos.advance(curr_char),text,keyword)
-    print(keyword)
+        return make_identifier(curr_pos.advance(curr_char),text,keyword+curr_char)
     if(keyword == 'and'):
         return Token(TokenTypes.TT_PLUS), curr_pos
     elif(keyword == 'returns'):
@@ -169,49 +164,44 @@ def make_identifier(curr_pos:Position = Position(),text:str = '',keyword:str = '
     elif(keyword == 'cancelled'):
         return Token(TokenTypes.TT_NOT), curr_pos
     else:
-        tok_type = TokenTypes.TT_KEYWORD if keyword in TokenTypes.KEYWORDS else TokenTypes.TT_IDENTIFIER
-        return Token(tok_type, keyword), curr_pos
+        return Token(TokenTypes.TT_KEYWORD if keyword in TokenTypes.KEYWORDS else TokenTypes.TT_IDENTIFIER, keyword), curr_pos
 
 def make_equals(curr_pos:Position = Position(), text:str=''):
-    curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
+    curr_char = get_curr_char(text, curr_pos)
     token, new_pos = make_identifier(curr_pos.advance(curr_char),text)
     if token.type == 'KEYWORD':
-        print('TOKEN AND TYPE',token, token.value, token.type)
         return Token(TokenTypes.TT_EQ), curr_pos.goTo(curr_pos.idx - len(token.value)) 
     if token.type == 'EQ':
-        tok_type = TokenTypes.TT_EE
+        return Token(TokenTypes.TT_EE), new_pos
     elif token.type == 'LT':
-        tok_type = TokenTypes.TT_LTE
+        return Token(TokenTypes.TT_LTE), new_pos
     elif token.type == 'GT':
-        tok_type = TokenTypes.TT_GTE
+        return Token(TokenTypes.TT_GTE), new_pos
     elif token.type == 'NOT':
-        tok_type = TokenTypes.TT_NE
+        return Token(TokenTypes.TT_NE), new_pos
     else:
-        tok_type = TokenTypes.TT_EQ
-        return Token(tok_type), curr_pos
-    return Token(tok_type), new_pos
+        return Token(TokenTypes.TT_EQ), curr_pos
     
 def make_number(curr_pos:Position = Position(), text:str='', num_str:str = '', dot_count:int = 0 ) -> Union[Token, Position]:
-    curr_char = text[curr_pos.idx] if curr_pos.idx < len(text) else None
+    curr_char = get_curr_char(text, curr_pos)
     if curr_char != None and curr_char in DIGITS + '.':
         if curr_char == '.':
             if dot_count == 0: 
-                dot_count += 1
-                num_str += '.'
-                return make_number(curr_pos.advance(curr_char),text,num_str, dot_count)
+                return make_number(curr_pos.advance(curr_char),text,num_str+'.', dot_count+1)
         else:
-            num_str += curr_char
-            return make_number(curr_pos.advance(curr_char),text,num_str, dot_count)
+            return make_number(curr_pos.advance(curr_char),text,num_str+curr_char, dot_count)
 
     if dot_count == 0:
         return Token(TokenTypes.TT_INT, int(num_str)), curr_pos
     else:
         return Token(TokenTypes.TT_FLOAT, float(num_str)), curr_pos
 
+def get_curr_char(text:str='', curr_pos:Position = Position()):
+    return text[curr_pos.idx] if curr_pos.idx < len(text) else None
+
 def run(fn:str='', text:str=''):
-    pos = Position(0, 0, 0, fn, text)
-    tokens, error = make_tokens([], pos, text)
+    tokens, error = make_tokens([], Position(0, 0, 0, fn, text), text)
     if error: return None, error
-    tokens = clean_tokens(tokens)
-    print(tokens)
-    return tokens, error
+    return clean_tokens(tokens), error
+    # print(tokens)
+    # return tokens, error

@@ -1,9 +1,6 @@
 from typing import List
 from myLexer import Token
 from myLexer import TokenTypes
-from myLexer import Position
-from myLexer import make_tokens
-from myLexer import clean_tokens
 import myLexer
 
 
@@ -65,7 +62,6 @@ class UnaryOpNode(Node):
     def __repr__(self) -> str:
         return f'({self.op_tok}, {self.node})'
 
-
 class IfNode:
     def __init__(self, cases, else_case):
         self.cases = cases
@@ -74,36 +70,30 @@ class IfNode:
         return f'(IFNODE:{self.cases}, {self.else_case})'
 
 def parse(tokens: List[Token] = []) -> any:
-    expr, _ = expression(tokens)
-    return expr
-
+    return expression(tokens)
 
 def if_expr(tokens: List[Token] = [], idx: int = 0):
         cases = []
-        curr_tok: Token = tokens[idx] if idx < len(tokens) else None
-
+        curr_tok: Token = get_curr_tok(tokens, idx)
         if not curr_tok.matches(TokenTypes.TT_KEYWORD, 'IF'):
             return None, idx
 
 
         condition, idx_1 = expression(tokens, idx+1)
-        next_tok: Token = tokens[idx_1] if idx_1 < len(tokens) else None
-
+        next_tok: Token = get_curr_tok(tokens, idx_1)
         if not next_tok.matches(TokenTypes.TT_KEYWORD, 'THEN'):
             return None, idx
 
         expr, idx_2 = expression(tokens, idx_1+1)
-        print('exoreors',condition,expr, idx_1)
         cases.append((condition, expr))
         return if_expr_loop(tokens, idx_2, cases)
         
 
 def if_expr_loop(tokens, idx, cases=[]):
-    curr_tok: Token = tokens[idx] if idx < len(tokens) else Token()
-    print('CurrTOK',curr_tok)
+    curr_tok: Token = get_curr_tok(tokens, idx)
     if curr_tok.matches(TokenTypes.TT_KEYWORD, 'ELIF'):
         condition, idx_1 = expression(tokens, idx+1)
-        next_tok: Token = tokens[idx_1] if idx_1 < len(tokens) else None
+        next_tok: Token = get_curr_tok(tokens, idx_1)
         if not next_tok.matches(TokenTypes.TT_KEYWORD, 'THEN'):
             return None, idx_1
         expr, idx_2 = expression(tokens, idx_1+1)
@@ -111,112 +101,84 @@ def if_expr_loop(tokens, idx, cases=[]):
         return if_expr_loop(tokens, idx_2, cases)
     elif curr_tok.matches(TokenTypes.TT_KEYWORD, 'ELSE'):
         else_case, idx_2 = expression(tokens, idx + 1)
-        print('ELSE',else_case)
         return IfNode(cases, else_case), idx_2
     return IfNode(cases, []), idx
 
 def comp_expr(tokens: List[Token] = [], idx: int = 0) -> tuple:
-    curr_tok: Token = tokens[idx] if idx < len(tokens) else None
+    curr_tok: Token = get_curr_tok(tokens, idx)
     if curr_tok.matches(TokenTypes.TT_KEYWORD, 'NOT'):
-        op_tok = curr_tok
-        exp, i = comp_expr(tokens, idx+1)
-        return UnaryOpNode(op_tok, exp), i
-    ops = (TokenTypes.TT_EE, TokenTypes.TT_NE, TokenTypes.TT_LT, TokenTypes.TT_GT, TokenTypes.TT_LTE, TokenTypes.TT_GTE)
-    node, i = bin_op_left(arith_expr, ops, tokens, idx)
-    return node, i
+        exp, idx_1 = comp_expr(tokens, idx+1)
+        return UnaryOpNode(curr_tok, exp), idx_1
+    return bin_op_left(arith_expr, (TokenTypes.TT_EE, TokenTypes.TT_NE, TokenTypes.TT_LT, TokenTypes.TT_GT, TokenTypes.TT_LTE, TokenTypes.TT_GTE), tokens, idx)
 
 def arith_expr(tokens: List[Token] = [], idx: int = 0) -> tuple:
-    exp, i = bin_op_left(term, (TokenTypes.TT_PLUS, TokenTypes.TT_MINUS), tokens, idx)
-    return exp, i
+    return bin_op_left(term, (TokenTypes.TT_PLUS, TokenTypes.TT_MINUS), tokens, idx)
 
 def expression(tokens: List[Token] = [], idx: int = 0) -> tuple:
-    # ##print('expr1')
-    curr_tok: Token = tokens[idx] if idx < len(tokens) else None
-    # print(curr_tok)
+    curr_tok: Token = get_curr_tok(tokens, idx)
     if curr_tok.matches(TokenTypes.TT_KEYWORD, 'VEHICLE'):
-        next_tok: Token = tokens[idx+1] if idx+1 < len(tokens) else None
+        next_tok: Token = get_curr_tok(tokens, idx+1)
         if next_tok.type != TokenTypes.TT_IDENTIFIER:
             return None, idx
-        vehicle_name = next_tok
-        next_next_tok: Token = tokens[idx+2] if idx+2 < len(tokens) else None
-        print('NEXTOTK',next_next_tok)
+        next_next_tok: Token = get_curr_tok(tokens, idx+2)
         if next_next_tok.type != TokenTypes.TT_EQ:
             return None, idx
-        expr,_ = expression(tokens, idx+3)
-        # print('ex', expr)
-        return VarAssignNode(vehicle_name, expr), idx+3
-
-    exp, i = bin_op_left(comp_expr, ((TokenTypes.TT_KEYWORD, "AND"),(TokenTypes.TT_KEYWORD, "OR")), tokens, idx)
-
-    # ##print('expr', exp)
-    return exp, i
+        expr, idx_1 = expression(tokens, idx+3)
+        return VarAssignNode(next_tok, expr), idx_1
+    return bin_op_left(comp_expr, ((TokenTypes.TT_KEYWORD, "AND"),(TokenTypes.TT_KEYWORD, "OR")), tokens, idx)
 
 
 def term(tokens: List[Token] = [], idx: int = 0) -> tuple:
-    # ##print('term1')
-    ter, i = bin_op_left(
-        factor, (TokenTypes.TT_MUL, TokenTypes.TT_DIV), tokens, idx)
-    # ##print('term', ter)
-    return ter, i
+    return bin_op_left(factor, (TokenTypes.TT_MUL, TokenTypes.TT_DIV), tokens, idx)
 
 
 def factor(tokens: List[Token] = [], idx: int = 0) -> tuple:
-    # ##print('facts')
-    curr_tok: Token = tokens[idx] if idx < len(tokens) else None
-    # print('fac cur',curr_tok.type)
+    curr_tok: Token = get_curr_tok(tokens, idx)
     if curr_tok is None:
         return None, idx+1
 
     if curr_tok.type in (TokenTypes.TT_PLUS, TokenTypes.TT_MINUS):
-        facts, i = factor(tokens, idx+1)
-        return UnaryOpNode(curr_tok, facts), i
+        facts, idx_1 = factor(tokens, idx+1)
+        return UnaryOpNode(curr_tok, facts), idx_1
     elif curr_tok.type == TokenTypes.TT_IDENTIFIER:
-        # print('yep', curr_tok)
         return VarAccesNode(curr_tok), idx+1
     elif curr_tok.type in (TokenTypes.TT_INT, TokenTypes.TT_FLOAT):
         return NumberNode(curr_tok), idx+1
 
     elif curr_tok.type == TokenTypes.TT_LPAREN:
-        expr, i = expression(tokens, idx+1)
-        # ##print('fact_exp', expr)
-        next_tok: Token = tokens[i] if i < len(tokens) else None
+        expr, idx_1 = expression(tokens, idx+1)
+        next_tok: Token = get_curr_tok(tokens, idx_1)
         if next_tok == None:
-            return None, i
-        if next_tok.type == TokenTypes.TT_RPAREN:
-            return expr, i+1
+            return None, idx_1
+        elif next_tok.type == TokenTypes.TT_RPAREN:
+            return expr, idx_1+1
     elif curr_tok.matches(TokenTypes.TT_KEYWORD, 'IF'):
-        if_express, i = if_expr(tokens,idx)
-        return if_express, i
+        return if_expr(tokens,idx)
     return None, idx
 
 
 def bin_op_left(func: callable, ops: tuple, tokens: List[Token] = [], idx: int = 0) -> tuple:
     funct, i = func(tokens, idx)
-    # print('bin_left', 'idx', idx, 'f', func, 'left', funct, 'i', i)
     return bin_op_right(func, ops, tokens, i, funct)
 
 
 def bin_op_right(func: callable, ops: tuple, tokens: List[Token], idx: int, left: any) -> tuple:
-    # ##print('bin_op_right', tokens, idx)
-    curr_tok: Token = tokens[idx] if idx < len(tokens) else None
+    curr_tok: Token = get_curr_tok(tokens, idx)
     if curr_tok is None:
         return left, idx
-    # ##print('ops', ops)
-    print('BINRIGHT',(curr_tok.type, curr_tok.value), ops)
+
     if curr_tok.type in ops or (curr_tok.type, curr_tok.value) in ops:
-        op_tok = curr_tok
         right, i = func(tokens, idx+1)
-        # print('right', right, 'i', i)
-        return bin_op_right(func, ops, tokens, i, BinOpNode(left, op_tok, right))
+        return bin_op_right(func, ops, tokens, i, BinOpNode(left, curr_tok, right))
     return left, idx
 
+def get_curr_tok(tokens:List[Token]=[], idx:int=0) -> Token or None:
+    return tokens[idx] if idx < len(tokens) else Token()
 
 def run(fn: str = '', text: str = '') -> tuple:
     tokens, error = myLexer.run(fn, text)
     if error:
         return None, error
-    ast = parse(tokens)
-    print('parse ast',type(ast))
-    # print('ast1',type(ast.left_node),type(ast.op_tok),type(ast.right_node) )
-    print('norm', ast)
+    ast, _ = parse(tokens)
+
     return ast, None
