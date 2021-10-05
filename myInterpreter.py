@@ -1,7 +1,5 @@
-from myLexer import Token
 import myParser
-from myParser import TokenTypes, BinOpNode, NumberNode, UnaryOpNode, Node, VarAccesNode, VarAssignNode, IfNode
-import functools
+from myParser import TokenTypes, BinOpNode, NumberNode, UnaryOpNode, Node, VarAccesNode, VarAssignNode, IfNode,ForNode, WhileNode
 
 
 def interpreter(ast, symbol_table):
@@ -109,6 +107,10 @@ def visit(node:Node,symbol_table:SymbolTable) -> any:
         return visit_VarAssignNode(node,symbol_table)
     elif isinstance(node, IfNode):
         return visit_IfNode(node,symbol_table)
+    elif isinstance(node, ForNode):
+        return visit_ForNode(node,symbol_table)
+    elif isinstance(node, WhileNode):
+        return visit_WhileNode(node,symbol_table)
     elif node == None:
         pass
 
@@ -160,7 +162,6 @@ def visit_UnaryOpNode(node:Node,symbol_table:SymbolTable):
 
 def visit_VarAccesNode(node: Node,symbol_table:SymbolTable):
     value = symbol_table.look_up(node.var_name_tok.value)
-
     if not value:
         return None, symbol_table
     return value, symbol_table
@@ -187,13 +188,38 @@ def IfNode_loop(node:Node, symbol_table:SymbolTable, idx=0):
         return expr_value,symbol_table_2
     return IfNode_loop(node, symbol_table_1, idx+1)
 
+def visit_ForNode(node:Node, symbol_table:SymbolTable):
+    start_value, symbol_table_1 = visit(node.start_value_node, symbol_table)
+    end_value, symbol_table_2 = visit(node.end_value_node, symbol_table_1)
+    if node.step_value_node:
+        step_value, symbol_table_3 = visit(node.end_value_node, symbol_table_2)
+        return ForNode_loop(node, symbol_table_3, start_value.value, end_value.value, step_value.value)
+    else:
+        return ForNode_loop(node, symbol_table_2, start_value.value, end_value.value, 1)
+
+def ForNode_loop(node:Node, symbol_table:SymbolTable, start_value:int, end_value:int, step_value ):
+    if step_value >= 0:
+        if start_value > end_value:
+            return None, symbol_table
+    else: 
+        if start_value < end_value:
+            return None, symbol_table
+    value, symbol_table_2 = visit(node.body_node, symbol_table.insert(node.var_name_tok.value, Number(start_value)))
+
+    return ForNode_loop(node, symbol_table_2.insert(node.var_name_tok.value, Number(start_value)), start_value + step_value, end_value, step_value)
+
+def visit_WhileNode(node:Node, symbol_table:SymbolTable):
+    condition, symbol_table_1 = visit(node.condition_node, symbol_table)
+    if not condition.is_true(): return None, symbol_table_1
+    value, symbol_table_2 = visit(node.body_node, symbol_table_1)
+    return visit_WhileNode(node, symbol_table_2)
+
 def get_case(cases:list = [], idx:int = 0):
     return cases[idx]
 
 def run(fn: str = '', text: str = '', symbol_table:SymbolTable= SymbolTable()):
     ast, _ = myParser.run(fn, text)
-    value, new_symbol_table = interpreter(ast, symbol_table)
-    print(ast)
-    print('new', new_symbol_table)
-    print('val',value)
-    return value, None, new_symbol_table
+    print('AST:',ast)
+    result, new_symbol_table = interpreter(ast, symbol_table)
+    print('SYMBOL_TABLE:', new_symbol_table, 'RESULT:',result)
+    return result, None, new_symbol_table
