@@ -1,5 +1,5 @@
 import string
-from typing import Union
+from typing import List, Tuple
 
 class Error:
     def __init__(self, pos_start, pos_end, error_name, details):
@@ -81,22 +81,24 @@ class TokenTypes():
     TT_GT           = 'GT'
     TT_LTE          = 'LTE'
     TT_GTE          = 'GTE'
+    TT_COMMA	    = 'COMMA'
+    TT_COLON		= 'COLON'   
     TT_EQ           = 'EQ'
     TT_EOF          = 'EOF'
-
     KEYWORDS = [
-        'VEHICLE', # Variable
+        'VEHICLE', # Variable maybe route?
         'AND', 
         'OR', 
         'NOT', 
-        'IF', 
-        'THEN', 
-        'ELIF', 
-        'ELSE', 
-        'FOR', 
-        'TO', 
-        'STEP', 
-        'WHILE'
+        'IF',       # Jam
+        'THEN',     # Flee
+        'ELIF',     # Alternate
+        'ELSE',     # Unjam
+        'FOR',      # GPS
+        'TO',       # To
+        'STEP',     # Speed
+        'WHILE',     # Wait
+        'ROUTE'     # Function
         ]
 
 
@@ -116,11 +118,11 @@ DIGITS = '0123456789'
 LETTERS = string.ascii_letters
 LETTERS_DIGITS = LETTERS + DIGITS
 
-def add_token(token:Token, pos:Position, tokens:list) -> tuple:
+def add_token(token:Token, pos:Position, tokens:list) -> Tuple[List[Token], Position]:
     tokens.append(token)
     return tokens, pos
 
-def make_tokens(tokens:list, curr_pos:Position, text:str) -> Union[list, Error]:
+def make_tokens(tokens:list, curr_pos:Position, text:str) -> Tuple[list, Error]:
     curr_char = get_curr_char(text, curr_pos)
     if curr_char == None:
         return tokens, None
@@ -130,6 +132,8 @@ def make_tokens(tokens:list, curr_pos:Position, text:str) -> Union[list, Error]:
         return make_tokens(*add_token(*make_number(curr_pos,text), tokens), text) 
     elif curr_char in LETTERS:
         return make_tokens(*add_token(*make_identifier(curr_pos,text),tokens), text)
+    elif curr_char == ':':
+        tokens.append(Token(TokenTypes.TT_COLON))
     elif curr_char == '+':
         tokens.append(Token(TokenTypes.TT_PLUS))
     elif curr_char == '-':
@@ -146,15 +150,19 @@ def make_tokens(tokens:list, curr_pos:Position, text:str) -> Union[list, Error]:
         tokens.append(Token(TokenTypes.TT_LCURLY))
     elif curr_char == '}':
         tokens.append(Token(TokenTypes.TT_RCURLY))
+    elif curr_char == ',':
+        tokens.append(Token(TokenTypes.TT_COMMA))
     elif curr_char == ';':
         tokens.append(Token(TokenTypes.TT_SEMICOLON))
 
     return make_tokens(tokens, curr_pos.advance(curr_char), text) 
     
-def clean_tokens(tokens=[]) -> list:
+def clean_tokens(tokens=[]) -> List[Token]:
     return list(filter(None, tokens))
 
-def make_identifier(curr_pos:Position = Position(),text:str = '',keyword:str = '') -> Union[Token, Position]:
+    
+
+def make_identifier(curr_pos:Position = Position(),text:str = '',keyword:str = '') -> Tuple[Token, Position]:
     curr_char = get_curr_char(text, curr_pos)
     if keyword != '' and keyword[0] in DIGITS:
         return Token(), curr_pos.goTo(curr_pos.idx-len(keyword))
@@ -179,7 +187,7 @@ def make_identifier(curr_pos:Position = Position(),text:str = '',keyword:str = '
     else:
         return Token(TokenTypes.TT_KEYWORD if keyword in TokenTypes.KEYWORDS else TokenTypes.TT_IDENTIFIER, keyword), curr_pos
 
-def make_equals(curr_pos:Position = Position(), text:str=''):
+def make_equals(curr_pos:Position = Position(), text:str='') -> Tuple[Token, Position]:
     curr_char = get_curr_char(text, curr_pos)
     token, new_pos = make_identifier(curr_pos.advance(curr_char),text)
     if token.type == 'KEYWORD' or token.type == 'IDENTIFIER':
@@ -195,7 +203,7 @@ def make_equals(curr_pos:Position = Position(), text:str=''):
     else:
         return Token(TokenTypes.TT_EQ), curr_pos
     
-def make_number(curr_pos:Position = Position(), text:str='', num_str:str = '', dot_count:int = 0 ) -> Union[Token, Position]:
+def make_number(curr_pos:Position = Position(), text:str='', num_str:str = '', dot_count:int = 0 ) -> Tuple[Token, Position]:
     curr_char = get_curr_char(text, curr_pos)
     if curr_char != None and curr_char in DIGITS + '.':
         if curr_char == '.':
@@ -209,7 +217,7 @@ def make_number(curr_pos:Position = Position(), text:str='', num_str:str = '', d
     else:
         return Token(TokenTypes.TT_FLOAT, float(num_str)), curr_pos
 
-def get_curr_char(text:str='', curr_pos:Position = Position()):
+def get_curr_char(text:str='', curr_pos:Position = Position()) -> str or None:
     return text[curr_pos.idx] if curr_pos.idx < len(text) else None
 
 def run(fn:str='', text:str=''):

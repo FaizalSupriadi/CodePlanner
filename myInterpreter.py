@@ -1,5 +1,5 @@
 import myParser
-from myParser import TokenTypes, BinOpNode, NumberNode, UnaryOpNode, Node, VarAccesNode, VarAssignNode, IfNode,ForNode, WhileNode
+from myParser import TokenTypes,CallNode, FuncDefNode, BinOpNode, NumberNode, UnaryOpNode, Node, VarAccesNode, VarAssignNode, IfNode,ForNode, WhileNode
 
 
 def interpreter(ast, symbol_table):
@@ -30,11 +30,62 @@ class SymbolTable:
     def __repr__(self) -> str:
         return f'{self.symbols}'
 
+class Value:
+    def __init__(self,symbol_table:SymbolTable = SymbolTable()):
+        self.symbol_table = symbol_table
 
+    def added_to(self, other):
+        return None, self.illegal_operation(other)
+
+    def subbed_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def multed_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def dived_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def powed_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def get_comparison_eq(self, other):
+        return None, self.illegal_operation(other)
+
+    def get_comparison_ne(self, other):
+        return None, self.illegal_operation(other)
+
+    def get_comparison_lt(self, other):
+        return None, self.illegal_operation(other)
+
+    def get_comparison_gt(self, other):
+        return None, self.illegal_operation(other)
+
+    def get_comparison_lte(self, other):
+        return None, self.illegal_operation(other)
+
+    def get_comparison_gte(self, other):
+        return None, self.illegal_operation(other)
+
+    def anded_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def ored_by(self, other):
+        return None, self.illegal_operation(other)
+
+    def notted(self,other):
+        return None, self.illegal_operation(other)
+
+    def is_true(self):
+        return False
+
+    def illegal_operation(self, other=None):
+        if not other: other = self
+        return None
 class Number:
     def __init__(self, value=None):
         self.value = value
-
+    # other is een number/ kan in haskell
     def added_to(self, other):
         if isinstance(other, Number):
             return Number(self.value + other.value)
@@ -93,6 +144,29 @@ class Number:
     def __repr__(self):
         return str(self.value)
 
+class Function(Value):
+    def __init__(self, name, body_node, arg_names, symbol_table:SymbolTable= SymbolTable()):
+        super().__init__(symbol_table)
+        self.name = name or "<anonymous>"
+        self.body_node = body_node
+        self.arg_names = arg_names
+    
+    def execute(self, args, symbol_table):
+        print(args)
+        print(len(args),len(self.arg_names))
+        if len(args) > len(self.arg_names):
+            return None, symbol_table
+        if len(args) < len(self.arg_names):
+            return None, symbol_table
+        symbol_table_1 = self.set_args(args, 0, symbol_table)
+        return visit(self.body_node, symbol_table_1)
+
+    def set_args(self, args,idx,symbol_table:SymbolTable):
+        if len(args) <= idx:
+            return symbol_table
+        return self.set_args(args, idx+1, symbol_table.insert(self.arg_names[idx], args[idx]))
+    def set_symbol_table(self, symbol_table):
+        return Function(self.name, self.body_node, self.arg_names, symbol_table)
 
 def visit(node:Node,symbol_table:SymbolTable) -> any:
     if isinstance(node,NumberNode):
@@ -111,6 +185,10 @@ def visit(node:Node,symbol_table:SymbolTable) -> any:
         return visit_ForNode(node,symbol_table)
     elif isinstance(node, WhileNode):
         return visit_WhileNode(node,symbol_table)
+    elif isinstance(node, FuncDefNode):
+        return visit_FuncDefNode(node,symbol_table)
+    elif isinstance(node, CallNode):
+        return visit_CallNode(node,symbol_table)
     elif node == None:
         pass
 
@@ -214,11 +292,37 @@ def visit_WhileNode(node:Node, symbol_table:SymbolTable):
     value, symbol_table_2 = visit(node.body_node, symbol_table_1)
     return visit_WhileNode(node, symbol_table_2)
 
+def visit_FuncDefNode(node:Node=Node(), symbol_table:SymbolTable=SymbolTable()):
+    func_name = node.var_name_tok.value if node.var_name_tok else None
+    func_value = Function(
+        func_name, 
+        node.body_node, 
+        [arg_name.value for arg_name in node.arg_name_toks], 
+        symbol_table
+        )
+    if node.var_name_tok:
+        symbol_table_1 = symbol_table.insert(func_name, func_value)
+        return func_value.set_symbol_table(symbol_table_1), symbol_table_1
+
+    return func_value, symbol_table
+def visit_CallNode(node:Node=Node(), symbol_table:SymbolTable=SymbolTable()):
+    value_to_call, symbol_table_1 = visit(node.node_to_call, symbol_table)
+    args, symbol_table_2 = call_loop(node, symbol_table_1,0,[])
+    return value_to_call.execute(args,symbol_table_2)
+
+def call_loop(node:Node=Node(), symbol_table:SymbolTable=SymbolTable(), idx:int=0, args:list=[]):
+    print(len(node.arg_nodes), idx)
+    if len(node.arg_nodes) <= idx:
+        return args, symbol_table
+    visitted, symbol_table_1 = visit(node.arg_nodes[idx], symbol_table)
+    args.append(visitted)
+    return call_loop(node, symbol_table_1, idx+1, args)
+
 def get_case(cases:list = [], idx:int = 0):
     return cases[idx]
 
 def run(fn: str = '', text: str = '', symbol_table:SymbolTable= SymbolTable()):
-    ast, _ = myParser.run(fn, text)
+    ast = myParser.run(fn, text)
     print('AST:',ast)
     result, new_symbol_table = interpreter(ast, symbol_table)
     print('SYMBOL_TABLE:', new_symbol_table, 'RESULT:',result)
