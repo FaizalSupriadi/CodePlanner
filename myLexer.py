@@ -72,6 +72,8 @@ class TokenTypes():
     TT_SEMICOLON    = 'SEMICOLON'
     TT_LCURLY       = 'LCURLY'
     TT_RCURLY       = 'RCURLY'
+    TT_LSQUARE      = 'LSQUARE'
+    TT_RSQUARE      = 'RSQUARE'
     TT_IDENTIFIER	= 'IDENTIFIER'
     TT_KEYWORD		= 'KEYWORD'
     TT_EE           = 'EE'
@@ -146,6 +148,10 @@ def make_tokens(tokens:list, curr_pos:Position, text:str) -> Tuple[list, Error]:
         tokens.append(Token(TokenTypes.TT_LPAREN))
     elif curr_char == ')':
         tokens.append(Token(TokenTypes.TT_RPAREN))
+    elif curr_char == '[':
+        tokens.append(Token(TokenTypes.TT_LSQUARE))
+    elif curr_char == ']':
+        tokens.append(Token(TokenTypes.TT_RSQUARE)) 
     elif curr_char == '{':
         tokens.append(Token(TokenTypes.TT_LCURLY))
     elif curr_char == '}':

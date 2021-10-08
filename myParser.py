@@ -5,7 +5,7 @@ import myLexer
 
 
 class Node:
-    def __init__(self, node_name='Node') -> None:
+    def __init__(self, node_name='NODE') -> None:
             self.node_name = node_name
 
     def __repr__(self) -> str:
@@ -14,7 +14,7 @@ class Node:
 
 class VarAccesNode(Node):
     def __init__(self, var_name_tok: any) -> None:
-        super().__init__('VarAccesNode')
+        super().__init__('VARACCESNODE')
         self.var_name_tok=var_name_tok
 
     def __repr__(self) -> str:
@@ -23,7 +23,7 @@ class VarAccesNode(Node):
 
 class VarAssignNode(Node):
     def __init__(self, var_name_tok: any, value_node: any) -> None:
-        super().__init__('VarAssignNode')
+        super().__init__('VARASSIGNNODE')
         self.var_name_tok=var_name_tok
         self.value_node=value_node
     def __repr__(self) -> str:
@@ -32,7 +32,7 @@ class VarAssignNode(Node):
 
 class NumberNode(Node):
     def __init__(self, tok: Token) -> None:
-        super().__init__('NumberNode')
+        super().__init__('NUMBERNODE')
         self.tok=tok
     def __repr__(self) -> str:
         return f'{self.node_name}: {self.tok}'
@@ -40,7 +40,7 @@ class NumberNode(Node):
 
 class BinOpNode(Node):
     def __init__(self, left_node: any, op_tok: Token, right_node: any) -> None:
-        super().__init__('BinOpNode')
+        super().__init__('BINOPNODE')
         self.left_node=left_node
         self.op_tok=op_tok
         self.right_node=right_node
@@ -50,7 +50,7 @@ class BinOpNode(Node):
 
 class UnaryOpNode(Node):
     def __init__(self, op_tok: Token, node: any) -> None:
-        super().__init__('UnaryOpNode')
+        super().__init__('UNARYOPNODE')
         self.op_tok=op_tok
         self.node=node
     def __repr__(self) -> str:
@@ -58,7 +58,7 @@ class UnaryOpNode(Node):
 
 class IfNode(Node):
     def __init__(self, cases, else_case):
-        super().__init__('IfNode')
+        super().__init__('IFNODE')
         self.cases = cases
         self.else_case = else_case
     def __repr__(self) -> str:
@@ -66,7 +66,7 @@ class IfNode(Node):
 
 class ForNode(Node):
     def __init__(self, var_name_tok, start_value_node, end_value_node, step_value_node, body_node):
-        super().__init__('ForNode')
+        super().__init__('FORNODE')
         self.var_name_tok = var_name_tok
         self.start_value_node = start_value_node
         self.end_value_node = end_value_node
@@ -77,7 +77,7 @@ class ForNode(Node):
         return f'({self.node_name}: {self.var_name_tok}, {self.start_value_node}, {self.end_value_node}, {self.step_value_node}, BODY: {self.body_node})'
 class WhileNode(Node):
     def __init__(self, condition_node, body_node):
-        super().__init__('WhileNode')
+        super().__init__('WHILENODE')
         self.condition_node = condition_node
         self.body_node = body_node
     
@@ -86,7 +86,7 @@ class WhileNode(Node):
 
 class FuncDefNode(Node):
     def __init__(self, var_name_tok, arg_name_toks, body_node):
-        super().__init__('FuncDefNode')
+        super().__init__('FUNCDEFNODE')
         self.var_name_tok = var_name_tok
         self.arg_name_toks = arg_name_toks
         self.body_node = body_node
@@ -95,12 +95,20 @@ class FuncDefNode(Node):
         return f'({self.node_name}: {self.var_name_tok}, arg_name_toks{self.arg_name_toks}, body_node:{self.body_node})'
 class CallNode(Node):
     def __init__(self, node_to_call, arg_nodes):
-        super().__init__('CallNode')
+        super().__init__('CALLNODE')
         self.node_to_call = node_to_call
         self.arg_nodes = arg_nodes
 
     def __repr__(self) -> str:
         return f'({self.node_name}: {self.node_to_call}, arg_nodes:{self.arg_nodes})'
+
+class ListNode(Node):
+    def __init__(self, element_nodes):
+        super().__init__('LISTNODE')
+        self.element_nodes = element_nodes
+
+    def __repr__(self) -> str:
+        return f'({self.node_name}: {self.element_nodes})'
 
 def not_keyword_check(tokens: List[Token] = [], idx: int = 0, keyword:str='', func: callable = None) -> Tuple[any, int]:
     curr_tok: Token = get_curr_tok(tokens, idx)
@@ -162,27 +170,23 @@ def func_def_inputs(tokens: List[Token] = [], idx: int = 0, arg_name_toks:list=[
 
 def call(tokens: List[Token] = [], idx: int = 0):
     fact, idx_1 = factor(tokens, idx)
-    print(get_curr_tok(tokens, idx_1))
     if get_curr_tok(tokens, idx_1).type == TokenTypes.TT_LPAREN:
         if get_curr_tok(tokens, idx_1+1).type == TokenTypes.TT_RPAREN:
             return CallNode(fact, []), idx_1+1
         else:
             expr, idx_2 = expression(tokens,idx_1+1)
-            print('exxxx',expr)
-            arg_nodes, idx_3 = call_inputs(tokens, idx_2, [expr])
+            arg_nodes, idx_3 = args_inputs(tokens, idx_2, [expr])
             if get_curr_tok(tokens, idx_3).type != TokenTypes.TT_RPAREN:
                 return None, idx_3
-            print(arg_nodes)
             return CallNode(fact, arg_nodes), idx_3
     return fact, idx_1
 
-def call_inputs(tokens: List[Token] = [], idx: int = 0, arg_nodes:list = []):
-    print(get_curr_tok(tokens, idx))
+def args_inputs(tokens: List[Token] = [], idx: int = 0, arg_nodes:list = []):
+    print(arg_nodes,get_curr_tok(tokens, idx))
     if get_curr_tok(tokens, idx).type == TokenTypes.TT_COMMA:
         expr, idx_1 = expression(tokens, idx+1)
         arg_nodes.append(expr)
-        print('expr!',expr)
-        return call_inputs(tokens, idx_1, arg_nodes)
+        return args_inputs(tokens, idx_1, arg_nodes)
     return arg_nodes, idx
 
 def for_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
@@ -235,6 +239,21 @@ def if_expr_loop(tokens, idx, cases=[]) -> Tuple[Node, int]:
         else_case, idx_2 = expression(tokens, idx + 1)
         return IfNode(cases, else_case), idx_2
     return IfNode(cases, []), idx
+def list_expr(tokens: List[Token] = [], idx: int = 0):
+    element_nodes = []
+
+    if get_curr_tok(tokens, idx).type != TokenTypes.TT_LSQUARE:
+        return None, idx
+    
+    if get_curr_tok(tokens, idx+1).type == TokenTypes.TT_RSQUARE:
+        return ListNode(element_nodes), idx+1
+    else:
+        expr, idx_1 = expression(tokens, idx+1)
+        element_nodes.append(expr)
+        element_nodes_1, idx_2 = args_inputs(tokens, idx_1, element_nodes)
+        if get_curr_tok(tokens, idx_2).type != TokenTypes.TT_RSQUARE:
+            return None, idx_2
+        return ListNode(element_nodes_1), idx_2
 
 def comp_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     curr_tok: Token = get_curr_tok(tokens, idx)
@@ -283,6 +302,8 @@ def factor(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
             return None, idx_1
         elif next_tok.type == TokenTypes.TT_RPAREN:
             return expr, idx_1+1
+    elif curr_tok.type == TokenTypes.TT_LSQUARE:
+        return list_expr(tokens, idx)
     elif curr_tok.matches(TokenTypes.TT_KEYWORD, 'IF'):
         return if_expr(tokens,idx)
     elif curr_tok.matches(TokenTypes.TT_KEYWORD, 'FOR'):
