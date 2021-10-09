@@ -1,0 +1,9 @@
+ROUTE add(a,b): a + b
+
+ROUTE min(a,b)
+    RETURN a - b
+END
+
+PRINT(add(1,2))
+PRINT(min(1,2))
+

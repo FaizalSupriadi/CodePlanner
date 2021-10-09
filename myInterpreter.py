@@ -91,6 +91,8 @@ class Number:
     # other is een number/ kan in haskell
     def added_to(self, other):
         if isinstance(other, Number):
+            num = Number(self.value + other.value)
+            #print('NUUUUUUUUUUUUUUUM',self.value, other.value)
             return Number(self.value + other.value)
 
     def subtracted_by(self, other):
@@ -245,56 +247,56 @@ class Function(Value):
 
 def visit(node:Node,symbol_table:SymbolTable) -> any:
     if isinstance(node,NumberNode):
-        #print(node , 'visit_NumberNode')
+        print(node , 'visit_NumberNode')
         return visit_NumberNode(node,symbol_table)
     elif isinstance(node,BinOpNode):
-        #print(node , 'visit_BinOpNode')
+        print(node , 'visit_BinOpNode')
         return visit_BinOpNode(node,symbol_table)
     elif isinstance(node, UnaryOpNode):
-        #print(node , 'visit_UnaryOpNode')
+        print(node , 'visit_UnaryOpNode')
        
         return visit_UnaryOpNode(node,symbol_table)
     elif isinstance(node, VarAccesNode):
-        #print(node, 'visit_VarAccesNode')
+        print(node, 'visit_VarAccesNode')
         return visit_VarAccesNode(node,symbol_table)
     elif isinstance(node, VarAssignNode):
-        #print(node, 'visit_VarAssignNode')
+        print(node, 'visit_VarAssignNode')
 
         return visit_VarAssignNode(node,symbol_table)
     elif isinstance(node, IfNode):
-        #print(node , 'visit_IfNode')
+        print(node , 'visit_IfNode')
 
         return visit_IfNode(node,symbol_table)
     elif isinstance(node, ForNode):
-        #print(node , 'visit_ForNode')
+        print(node , 'visit_ForNode')
        
         return visit_ForNode(node,symbol_table)
     elif isinstance(node, WhileNode):
-        #print(node , 'visit_WhileNode')
+        print(node , 'visit_WhileNode')
 
         return visit_WhileNode(node,symbol_table)
     elif isinstance(node, FuncDefNode):
-        #print(node , 'visit_FuncDefNode')
+        print(node , 'visit_FuncDefNode')
 
         return visit_FuncDefNode(node,symbol_table)
     elif isinstance(node, CallNode):
-        #print(node , ' visit_CallNode')
+        print(node , ' visit_CallNode')
 
         return visit_CallNode(node,symbol_table)
     elif isinstance(node, ListNode):
-        #print(node , 'visit_ListNode')
+        print(node , 'visit_ListNode')
 
         return visit_ListNode(node,symbol_table, 0, [])
     elif isinstance(node, ReturnNode):
-        #print(node , 'visit_ReturnNode')
+        print(node , 'visit_ReturnNode')
 
         return visit_ReturnNode(node,symbol_table)
     elif isinstance(node, PrintNode):
-        #print(node , 'visit_PrintNode')
+        print(node , 'visit_PrintNode')
 
         return visit_PrintNode(node,symbol_table)
     elif node == None:
-        pass
+        return None, symbol_table
 
 def no_visit_method(node: Node):
     raise Exception(f'No visit_{type(node).__name__} method defined{node}')
@@ -353,7 +355,7 @@ def visit_UnaryOpNode(node:Node,symbol_table:SymbolTable):
 
 def visit_PrintNode(node:Node,symbol_table:SymbolTable):
     printable, symbol_table_1 = visit(node.printable,symbol_table)
-    #print('PRINT',printable)
+    print(printable)
     if symbol_table_1.should_return: return printable, symbol_table_1
     return printable, symbol_table_1
 
@@ -416,7 +418,7 @@ def ForNode_loop(node:Node, symbol_table:SymbolTable, start_value:int, end_value
     if symbol_table_2.should_return: return value, symbol_table_2
 
     elements.append(value)
-    return ForNode_loop(node, symbol_table_2.insert(node.var_name_tok.value, Number(start_value)), start_value + step_value, end_value, step_value)
+    return ForNode_loop(node, symbol_table_2.insert(node.var_name_tok.value, Number(start_value)), start_value + step_value, end_value, step_value, elements)
 
 def visit_WhileNode(node:Node, symbol_table:SymbolTable,elements:list = []):
     condition, symbol_table_1 = visit(node.condition_node, symbol_table)
@@ -490,5 +492,6 @@ def run(fn: str = '', text: str = '', symbol_table:SymbolTable= SymbolTable()):
     print('AST:',ast)
     if ast == None: return None, None, symbol_table
     result, new_symbol_table = interpreter(ast, symbol_table)
+    
     # #print('SYMBOL_TABLE:', new_symbol_table, 'RESULT:',result)
     return result, None, new_symbol_table

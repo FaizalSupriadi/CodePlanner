@@ -1,0 +1,12 @@
+
+ROUTE sommig(n)
+    VEHICLE result travels 0
+
+    WHILE n travels more 1 THEN
+        VEHICLE result travels result and n
+        VEHICLE n travels n returns 1
+        PRINT(result)
+    END
+
+    RETURN result
+END

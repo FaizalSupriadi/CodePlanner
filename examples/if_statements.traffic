@@ -1,0 +1,19 @@
+ROUTE check(n, m)
+    IF n travels travels 2 THEN
+        PRINT(100)
+    ELIF n travels travels 2 THEN
+        PRINT(200)
+    ELSE
+        PRINT(300)
+    END
+
+    IF m travels less 2 THEN
+        PRINT(400)
+    ELIF m travels more 2 THEN
+        PRINT(500)
+    ELIF m travels cancelled 2 THEN
+        PRINT(600)
+    ELSE
+        PRINT(700)
+    END
+END

@@ -310,15 +310,18 @@ def for_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
         step_value, idx_3 = expression(tokens, idx_2)
         if not get_curr_tok(tokens, idx_3).matches(TokenTypes.TT_KEYWORD, 'THEN'):
             return None, idx_3
-        if get_curr_tok(tokens, idx_3+1).type != TokenTypes.TT_NEWLINE:
+        print('STATETETAT',get_curr_tok(tokens, idx_3+1))
+        if get_curr_tok(tokens, idx_3+1).type == TokenTypes.TT_NEWLINE:
             body, idx_4 = statements(tokens, idx_3+2)
+            print('BODY',body)
             if not get_curr_tok(tokens, idx_4).matches(TokenTypes.TT_KEYWORD, 'END'):
                 return None, idx_4
             return ForNode(curr_tok_2, start_value, end_value, step_value, body, True), idx_4
     else: 
         if not get_curr_tok(tokens, idx_2).matches(TokenTypes.TT_KEYWORD, 'THEN'):
             return None, idx_2
-        body, idx_3 = statement_keywords(tokens, idx_2+1)
+        body, idx_3 = statements(tokens, idx_2+1)
+        print('BODYBUDY',body)
         return ForNode(curr_tok_1, start_value, end_value, None, body, False), idx_3
 
 def while_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
@@ -366,6 +369,7 @@ def if_expr_cases(tokens: List[Token] = [], idx: int = 0, keyword:str=''):
 
         if not get_curr_tok(tokens, idx_2).matches(TokenTypes.TT_KEYWORD, 'END'):
             new_cases,else_case, idx_3 = if_expr_or(tokens, idx_2)
+            print(new_cases, else_case)
             cases.extend(new_cases)
             return cases, else_case, idx_3
         return cases, else_case, idx_2
@@ -382,8 +386,7 @@ def if_expr_or(tokens: List[Token] = [], idx: int = 0):
     print('if_expr_or',get_curr_tok(tokens, idx))
     cases, else_case = [], None
     if get_curr_tok(tokens, idx).matches(TokenTypes.TT_KEYWORD, 'ELIF'):
-        all_cases, idx_1= if_expr_elif(tokens, idx)
-        new_cases, else_case = all_cases
+        new_cases, else_case, idx_1= if_expr_elif(tokens, idx)
         return new_cases, else_case, idx_1
     else:
         else_case, idx_1 = if_expr_else(tokens, idx)
@@ -522,12 +525,11 @@ def bin_op_right(func: callable, ops: tuple, tokens: List[Token], idx: int, left
     return left, idx
 
 def get_curr_tok(tokens:List[Token]=[], idx:int=0) -> Token:
-    # print('idx', idx, len(tokens))
     return tokens[idx] if idx < len(tokens) else Token()
 
 def run(fn: str = '', text: str = '') -> Node:
     tokens, error = myLexer.run(fn, text)
-    print('TOKENS:', tokens)
+    # print('TOKENS:', tokens)
     if error:
         return None, error
     ast, _ = parse(tokens)

@@ -1,0 +1,21 @@
+ROUTE odd(n); END
+ROUTE even(n); END
+
+ROUTE odd(n)
+    IF n travels travels 0 THEN
+        RETURN 0
+    ELSE
+        RETURN even(n returns 1)
+END
+
+ROUTE even(n)
+    IF n travels travels 0 THEN
+        RETURN 1
+    ELSE
+        RETURN odd(n returns 1)
+END
+
+PRINT(odd(1))
+PRINT(odd(2))
+PRINT(even(1))
+PRINT(even(2))

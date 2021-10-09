@@ -237,6 +237,6 @@ def get_curr_char(text:str='', curr_pos:Position = Position()) -> str or None:
 def run(fn:str='', text:str=''):
     tokens, error = make_tokens([], Position(0, 0, 0, fn, text), text)
     if error: return None, error
+    print(tokens)
     return clean_tokens(tokens), error
-    # print(tokens)
     # return tokens, error
