@@ -1,5 +1,5 @@
 import myParser
-from myParser import TokenTypes,CallNode,ListNode, FuncDefNode, BinOpNode, NumberNode, UnaryOpNode, Node, VarAccesNode, VarAssignNode, IfNode,ForNode, WhileNode
+from myParser import TokenTypes,ReturnNode,CallNode,ListNode, PrintNode,FuncDefNode, BinOpNode, NumberNode, UnaryOpNode, Node, VarAccesNode, VarAssignNode, IfNode,ForNode, WhileNode
 
 
 def interpreter(ast, symbol_table):
@@ -7,10 +7,10 @@ def interpreter(ast, symbol_table):
     return res, new_symbol_table
 
 class SymbolTable:
-    def __init__(self, symbols:dict={}, parent=None, symbol_list:list=[]) -> None:
+    def __init__(self, symbols:dict={}, should_return:bool=False, symbol_list:list=[]) -> None:
         self.symbols = symbols
         self.symbol_list = symbol_list
-        self.parent = parent
+        self.should_return = should_return
 
     def look_up(self, name):
         value = self.symbols.get(name, None)
@@ -20,12 +20,12 @@ class SymbolTable:
 
     def insert(self, name, value):
         if name in self.symbol_list:
-            return SymbolTable(self.symbols, self.parent )
-        return SymbolTable({**self.symbols, **{name:value}}, self.parent )
+            return SymbolTable(self.symbols, self.should_return )
+        return SymbolTable({**self.symbols, **{name:value}}, self.should_return )
 
     def insert_basic_function(self, name, value):
         self.symbol_list.append(name)
-        return SymbolTable({**self.symbols, **{name:value}}, self.parent,self.symbol_list )
+        return SymbolTable({**self.symbols, **{name:value}}, self.should_return,self.symbol_list )
 
     def copy(self):
         return self
@@ -153,12 +153,12 @@ class List(Value):
         self.elements = elements
 
     def added_to(self, other):
-        print('add')
+        #print('add')
         self.elements.append(other)
         return self.elements
 
     def subtracted_by(self, other):
-        print('subbed_by')
+        #print('subbed_by')
         if isinstance(other, Number):
             try:
                 self.elements.pop(other.value)
@@ -169,7 +169,7 @@ class List(Value):
             return None
 
     def multiplied_by(self, other):
-        print('multed_by')
+        #print('multed_by')
         if isinstance(other, List):
             self.elements.extend(other.elements)
             return self.elements
@@ -177,7 +177,7 @@ class List(Value):
             return None
 
     def divided_by(self, other):
-        print('dived_by')
+        #print('dived_by')
         if isinstance(other, Number):
             try:
                 return self.elements[other.value]
@@ -192,13 +192,16 @@ class List(Value):
     def __repr__(self):
         return f'[{", ".join([str(x) for x in self.elements])}]'
 
+Number.null = Number(0)
+
 class Function(Value):
-    def __init__(self, name, body_node, arg_names, symbol_table:SymbolTable= SymbolTable()):
+    def __init__(self, name, body_node, arg_names, symbol_table:SymbolTable= SymbolTable(),should_return_null:bool = False):
         super().__init__(symbol_table)
         self.name = name or "<anonymous>"
         self.body_node = body_node
         self.arg_names = arg_names
-    
+        self.should_return_null = should_return_null
+
     def execute(self, args, symbol_table):
 
         if len(args) > len(self.arg_names):
@@ -238,50 +241,58 @@ class Function(Value):
         return self.set_dict(key_diff, symbols_table, idx+1, diff.insert(key_diff[idx],symbols_table.look_up(key_diff[idx])))
 
     def __repr__(self) -> str:
-        return f'FUNCTION: ({self.name}: BODY: {self.body_node}, ARG_NAMES:{self.arg_names})'
+        return f'FUNCTION: (NAME: {self.name}: BODY: {self.body_node}, ARG_NAMES:{self.arg_names})'
 
 def visit(node:Node,symbol_table:SymbolTable) -> any:
     if isinstance(node,NumberNode):
-        print('visit_NumberNode')
+        #print(node , 'visit_NumberNode')
         return visit_NumberNode(node,symbol_table)
     elif isinstance(node,BinOpNode):
-        print('visit_BinOpNode')
+        #print(node , 'visit_BinOpNode')
         return visit_BinOpNode(node,symbol_table)
     elif isinstance(node, UnaryOpNode):
-        print('visit_UnaryOpNode')
+        #print(node , 'visit_UnaryOpNode')
        
         return visit_UnaryOpNode(node,symbol_table)
     elif isinstance(node, VarAccesNode):
-        print('visit_VarAccesNode')
+        #print(node, 'visit_VarAccesNode')
         return visit_VarAccesNode(node,symbol_table)
     elif isinstance(node, VarAssignNode):
-        print('visit_VarAssignNode')
+        #print(node, 'visit_VarAssignNode')
 
         return visit_VarAssignNode(node,symbol_table)
     elif isinstance(node, IfNode):
-        print('visit_IfNode')
+        #print(node , 'visit_IfNode')
 
         return visit_IfNode(node,symbol_table)
     elif isinstance(node, ForNode):
-        print('visit_ForNode')
+        #print(node , 'visit_ForNode')
        
         return visit_ForNode(node,symbol_table)
     elif isinstance(node, WhileNode):
-        print('visit_WhileNode')
+        #print(node , 'visit_WhileNode')
 
         return visit_WhileNode(node,symbol_table)
     elif isinstance(node, FuncDefNode):
-        print('visit_FuncDefNode')
+        #print(node , 'visit_FuncDefNode')
 
         return visit_FuncDefNode(node,symbol_table)
     elif isinstance(node, CallNode):
-        print('visit_CallNode')
+        #print(node , ' visit_CallNode')
 
         return visit_CallNode(node,symbol_table)
     elif isinstance(node, ListNode):
-        print('visit_ListNode')
+        #print(node , 'visit_ListNode')
 
         return visit_ListNode(node,symbol_table, 0, [])
+    elif isinstance(node, ReturnNode):
+        #print(node , 'visit_ReturnNode')
+
+        return visit_ReturnNode(node,symbol_table)
+    elif isinstance(node, PrintNode):
+        #print(node , 'visit_PrintNode')
+
+        return visit_PrintNode(node,symbol_table)
     elif node == None:
         pass
 
@@ -294,43 +305,57 @@ def visit_NumberNode(node: Node,symbol_table:SymbolTable):
 def visit_BinOpNode(node: Node,symbol_table:SymbolTable):
     left:Number or Value
     right:Number or Value
-    left, _= visit(node.left_node,symbol_table)
-    right,_= visit(node.right_node,symbol_table)
-    print(type(left),type(right))
+    # #print('TEST',node.left_node, node.right_node)
+
+    left, symbol_table_1 = visit(node.left_node,symbol_table)
+    if symbol_table_1.should_return: return left, symbol_table_1
+
+    right,symbol_table_2= visit(node.right_node,symbol_table_1)
+    if symbol_table_2.should_return: return right, symbol_table_2
+
+    # #print(left,right)
+    # #print(type(left),type(right))
     if node.op_tok.type == TokenTypes.TT_PLUS:
-        return left.added_to(right), symbol_table
+        return left.added_to(right), symbol_table_2
     elif node.op_tok.type == TokenTypes.TT_MINUS:
-        return left.subtracted_by(right), symbol_table
+        return left.subtracted_by(right), symbol_table_2
     elif node.op_tok.type == TokenTypes.TT_MUL:
-        return left.multiplied_by(right), symbol_table
+        return left.multiplied_by(right), symbol_table_2
     elif node.op_tok.type == TokenTypes.TT_DIV:
-        return left.divided_by(right), symbol_table
+        return left.divided_by(right), symbol_table_2
     elif node.op_tok.type == TokenTypes.TT_EE:
-        return left.get_comparison_eq(right), symbol_table
+        return left.get_comparison_eq(right), symbol_table_2
     elif node.op_tok.type == TokenTypes.TT_NE:
-        return left.get_comparison_ne(right), symbol_table
+        return left.get_comparison_ne(right), symbol_table_2
     elif node.op_tok.type == TokenTypes.TT_LT:
-        return left.get_comparison_lt(right), symbol_table
+        return left.get_comparison_lt(right), symbol_table_2
     elif node.op_tok.type == TokenTypes.TT_GT:
-        return left.get_comparison_gt(right), symbol_table
+        return left.get_comparison_gt(right), symbol_table_2
     elif node.op_tok.type == TokenTypes.TT_LTE:
-        return left.get_comparison_lte(right), symbol_table
+        return left.get_comparison_lte(right), symbol_table_2
     elif node.op_tok.type == TokenTypes.TT_GTE:
-        return left.get_comparison_gte(right), symbol_table
+        return left.get_comparison_gte(right), symbol_table_2
     elif node.op_tok.matches(TokenTypes.TT_KEYWORD, 'AND'):
-        return left.anded_by(right), symbol_table
+        return left.anded_by(right), symbol_table_2
     elif node.op_tok.matches(TokenTypes.TT_KEYWORD, 'OR'):
-        return left.ored_by(right), symbol_table
-    return None, symbol_table
+        return left.ored_by(right), symbol_table_2
+    return None, symbol_table_2
 
 
 def visit_UnaryOpNode(node:Node,symbol_table:SymbolTable):
-    number, _ = visit(node.node,symbol_table)
+    number, symbol_table_1 = visit(node.node,symbol_table)
+    if symbol_table_1.should_return: return number, symbol_table_1
 
     if node.op_tok.type == TokenTypes.TT_MINUS:
         number = number.multiplied_by(Number(-1))
 
     return number, symbol_table
+
+def visit_PrintNode(node:Node,symbol_table:SymbolTable):
+    printable, symbol_table_1 = visit(node.printable,symbol_table)
+    #print('PRINT',printable)
+    if symbol_table_1.should_return: return printable, symbol_table_1
+    return printable, symbol_table_1
 
 def visit_VarAccesNode(node: Node,symbol_table:SymbolTable):
     value = symbol_table.look_up(node.var_name_tok.value)
@@ -339,52 +364,70 @@ def visit_VarAccesNode(node: Node,symbol_table:SymbolTable):
     return value, symbol_table
 
 def visit_VarAssignNode(node: Node,symbol_table:SymbolTable):
-    value, new_symbol_table = visit(node.value_node, symbol_table)
-    return value, new_symbol_table.insert(node.var_name_tok.value, value)
+    value, symbol_table_1 = visit(node.value_node, symbol_table)
+    if symbol_table_1.should_return: return value, symbol_table_1
+    return value, symbol_table_1.insert(node.var_name_tok.value, value)
 
 def visit_IfNode(node: Node, symbol_table:SymbolTable):
     condition, symbol_table_1 = IfNode_loop(node, symbol_table)
-    if condition == None and node.else_case:
-        else_value, symbol_table_2 = visit(node.else_case, symbol_table_1)
-        return else_value, symbol_table_2
+    if symbol_table_1.should_return: return condition, symbol_table_1
+    if node.else_case:
+        expr, should_return_null = node.else_case
+        if expr != None:
+            else_value, symbol_table_2 = visit(expr, symbol_table_1)
+            if symbol_table_2.should_return: return else_value, symbol_table_2
+            return Number.null if should_return_null else else_value, symbol_table_2
     return condition, symbol_table_1
 
 def IfNode_loop(node:Node, symbol_table:SymbolTable, idx=0):
     if idx == len(node.cases):
-        return None, symbol_table
-    condition, expr = get_case(node.cases, idx)
+        return Number.null , symbol_table
+    condition, expr, should_return_null = get_case(node.cases, idx)
     condition_value, symbol_table_1 = visit(condition, symbol_table)
-
+    if symbol_table_1.should_return: return condition_value, symbol_table_1
     if condition_value.is_true():
         expr_value, symbol_table_2 = visit(expr, symbol_table_1)
+        if symbol_table_2.should_return: return expr_value, symbol_table_2
         return expr_value,symbol_table_2
     return IfNode_loop(node, symbol_table_1, idx+1)
 
 def visit_ForNode(node:Node, symbol_table:SymbolTable):
+    elements = []
     start_value, symbol_table_1 = visit(node.start_value_node, symbol_table)
+    if symbol_table_1.should_return: return start_value, symbol_table_1
+
     end_value, symbol_table_2 = visit(node.end_value_node, symbol_table_1)
+    if symbol_table_2.should_return: return end_value, symbol_table_2
     if node.step_value_node:
         step_value, symbol_table_3 = visit(node.end_value_node, symbol_table_2)
-        return ForNode_loop(node, symbol_table_3, start_value.value, end_value.value, step_value.value)
+        if symbol_table_3.should_return: return step_value, symbol_table_3
+        return ForNode_loop(node, symbol_table_3, start_value.value, end_value.value, step_value.value, elements)
     else:
-        return ForNode_loop(node, symbol_table_2, start_value.value, end_value.value, 1)
+        return ForNode_loop(node, symbol_table_2, start_value.value, end_value.value, 1, elements)
 
-def ForNode_loop(node:Node, symbol_table:SymbolTable, start_value:int, end_value:int, step_value ):
+def ForNode_loop(node:Node, symbol_table:SymbolTable, start_value:int, end_value:int, step_value:int,elements:list ):
     if step_value >= 0:
         if start_value > end_value:
-            return None, symbol_table
+            return Number.null if node.should_return_null else List(elements), symbol_table
     else: 
         if start_value < end_value:
-            return None, symbol_table
+            return Number.null if node.should_return_null else List(elements), symbol_table
     value, symbol_table_2 = visit(node.body_node, symbol_table.insert(node.var_name_tok.value, Number(start_value)))
+    if symbol_table_2.should_return: return value, symbol_table_2
 
+    elements.append(value)
     return ForNode_loop(node, symbol_table_2.insert(node.var_name_tok.value, Number(start_value)), start_value + step_value, end_value, step_value)
 
-def visit_WhileNode(node:Node, symbol_table:SymbolTable):
+def visit_WhileNode(node:Node, symbol_table:SymbolTable,elements:list = []):
     condition, symbol_table_1 = visit(node.condition_node, symbol_table)
-    if not condition.is_true(): return None, symbol_table_1
+    if symbol_table_1.should_return: return condition, symbol_table_1
+
+    if not condition.is_true(): return Number.null if node.should_return_null else List(elements), symbol_table_1
     value, symbol_table_2 = visit(node.body_node, symbol_table_1)
-    return visit_WhileNode(node, symbol_table_2)
+    if symbol_table_2.should_return: return value, symbol_table_2
+
+    elements.append(value)
+    return visit_WhileNode(node, symbol_table_2,elements)
 
 def visit_ListNode(node:Node=Node(), symbol_table:SymbolTable=SymbolTable(), idx:int=0, elements:list = []):
     if node.element_nodes is None:
@@ -392,7 +435,9 @@ def visit_ListNode(node:Node=Node(), symbol_table:SymbolTable=SymbolTable(), idx
     if len(node.element_nodes) <= idx:
         return List(elements), symbol_table
     visitted, symbol_table_1 = visit(node.element_nodes[idx], symbol_table)
+    if symbol_table_1.should_return: return visitted, symbol_table_1
     elements.append(visitted)
+    # #print(elements)
     return visit_ListNode(node, symbol_table_1,idx+1, elements)
 
 def visit_FuncDefNode(node:Node=Node(), symbol_table:SymbolTable=SymbolTable()):
@@ -401,7 +446,8 @@ def visit_FuncDefNode(node:Node=Node(), symbol_table:SymbolTable=SymbolTable()):
         func_name, 
         node.body_node, 
         [arg_name.value for arg_name in node.arg_name_toks], 
-        symbol_table
+        symbol_table,
+        node.should_return_null
         )
     if node.var_name_tok:
         symbol_table_1 = symbol_table.insert(func_name, func_value)
@@ -410,15 +456,31 @@ def visit_FuncDefNode(node:Node=Node(), symbol_table:SymbolTable=SymbolTable()):
     return func_value, symbol_table
 def visit_CallNode(node:Node=Node(), symbol_table:SymbolTable=SymbolTable()):
     value_to_call, symbol_table_1 = visit(node.node_to_call, symbol_table)
+    if symbol_table_1.should_return: return value_to_call, symbol_table_1
     args, symbol_table_2 = call_loop(node, symbol_table_1,0,[])
+    # #print(node.node_to_call)
     return value_to_call.execute(args,symbol_table_2)
 
 def call_loop(node:Node=Node(), symbol_table:SymbolTable=SymbolTable(), idx:int=0, args:list=[]):
     if len(node.arg_nodes) <= idx:
         return args, symbol_table
     visitted, symbol_table_1 = visit(node.arg_nodes[idx], symbol_table)
+    if symbol_table_1.should_return: return visitted, symbol_table_1
+
     args.append(visitted)
     return call_loop(node, symbol_table_1, idx+1, args)
+    
+def visit_ReturnNode(node:Node=Node(), symbol_table:SymbolTable=SymbolTable()):
+    if node.node_to_return:
+        value, symbol_table_1 = visit(node.node_to_return, symbol_table)
+        #print(value)
+        if symbol_table_1.should_return: return value, symbol_table_1
+        symbol_table_1.should_return = True
+        return value, symbol_table_1
+    else:
+        value = Number.null
+        return value, symbol_table
+
 
 def get_case(cases:list = [], idx:int = 0):
     return cases[idx]
@@ -426,6 +488,7 @@ def get_case(cases:list = [], idx:int = 0):
 def run(fn: str = '', text: str = '', symbol_table:SymbolTable= SymbolTable()):
     ast = myParser.run(fn, text)
     print('AST:',ast)
+    if ast == None: return None, None, symbol_table
     result, new_symbol_table = interpreter(ast, symbol_table)
-    print('SYMBOL_TABLE:', new_symbol_table, 'RESULT:',result)
+    # #print('SYMBOL_TABLE:', new_symbol_table, 'RESULT:',result)
     return result, None, new_symbol_table

@@ -86,6 +86,7 @@ class TokenTypes():
     TT_COMMA	    = 'COMMA'
     TT_COLON		= 'COLON'   
     TT_EQ           = 'EQ'
+    TT_NEWLINE		= 'NEWLINE'
     TT_EOF          = 'EOF'
     KEYWORDS = [
         'VEHICLE', # Variable maybe route?
@@ -100,7 +101,12 @@ class TokenTypes():
         'TO',       # To
         'STEP',     # Speed
         'WHILE',     # Wait
-        'ROUTE'     # Function
+        'ROUTE',     # Function
+        'END',
+        'RETURN',
+        'CONTINUE',
+        'BREAK',
+        'PRINT',
         ]
 
 
@@ -130,6 +136,8 @@ def make_tokens(tokens:list, curr_pos:Position, text:str) -> Tuple[list, Error]:
         return tokens, None
     elif curr_char in ' \t':
         pass
+    elif curr_char in ';\n':
+        tokens.append(Token(TokenTypes.TT_NEWLINE))
     elif curr_char in DIGITS:
         return make_tokens(*add_token(*make_number(curr_pos,text), tokens), text) 
     elif curr_char in LETTERS:
