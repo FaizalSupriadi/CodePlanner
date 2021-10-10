@@ -1,7 +1,7 @@
 # CodePlanner
 Gekozen taal: Eigen Taal(CodePlanner)
 
-Turing-compleet omdat:
+# Turing-compleet:
 Uit een stackoverflow post van Ixrec heeft hij heuristics beschreven die een taal als Turing-compleet kan zien:
 
 https://softwareengineering.stackexchange.com/questions/315919/how-is-brainfuck-turing-complete#:~:text=Conditional%20branching%20is,an%20infinite%20loop.
