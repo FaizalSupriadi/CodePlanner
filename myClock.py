@@ -1,5 +1,6 @@
 import time
 class Clock:
+    
     def __init__(self, name:str='Clock',  seconds=0) -> None:
         self.name = name
         self.seconds = seconds
