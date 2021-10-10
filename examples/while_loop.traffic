@@ -1,5 +1,5 @@
 VEHICLE i travels 0
-WHILE i travels less 10 THEN
+SPEEDING i travels less 10 GPS
     VEHICLE i travels i and 1
     PRINT(i)
-END
+REFUEL

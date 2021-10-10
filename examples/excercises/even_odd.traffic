@@ -1,19 +1,19 @@
-ROUTE odd(n); END
-ROUTE even(n); END
+ROUTE odd(n); REFUEL
+ROUTE even(n); REFUEL
 
 ROUTE odd(n)
-    IF n travels travels 0 THEN
-        RETURN 0
-    ELSE
-        RETURN even(n returns 1)
-END
+    TRAFFIC n travels travels 0 GPS
+        DESTINATION 0
+    FLEE
+        DESTINATION even(n returns 1)
+REFUEL
 
 ROUTE even(n)
-    IF n travels travels 0 THEN
-        RETURN 1
-    ELSE
-        RETURN odd(n returns 1)
-END
+    TRAFFIC n travels travels 0 GPS
+        DESTINATION 1
+    FLEE
+        DESTINATION odd(n returns 1)
+REFUEL
 
 PRINT(odd(1))
 PRINT(odd(2))

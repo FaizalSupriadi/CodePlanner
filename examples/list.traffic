@@ -1,2 +1,14 @@
 VEHICLE a travels [1,2]
 PRINT(a)
+
+# append
+PRINT(a+2)
+
+# get value at
+PRINT(a/1)
+PRINT(a/2)
+
+# remove at
+PRINT(a-1)
+
+PRINT(a*[5,4])

@@ -1,5 +1,5 @@
 import myParser
-from myParser import TokenTypes,ReturnNode,CallNode,ListNode, PrintNode,FuncDefNode, BinOpNode, NumberNode, UnaryOpNode, Node, VarAccesNode, VarAssignNode, IfNode,ForNode, WhileNode
+from myParser import TokenTypes,DestinationNode,CallNode,ListNode, PrintNode,FuncDefNode, BinOpNode, NumberNode, UnaryOpNode, Node, VarAccesNode, VarAssignNode, IfNode,ForNode, WhileNode
 
 
 def interpreter(ast, symbol_table):
@@ -92,7 +92,6 @@ class Number:
     def added_to(self, other):
         if isinstance(other, Number):
             num = Number(self.value + other.value)
-            ##print('NUUUUUUUUUUUUUUUM',self.value, other.value)
             return Number(self.value + other.value)
 
     def subtracted_by(self, other):
@@ -155,12 +154,10 @@ class List(Value):
         self.elements = elements
 
     def added_to(self, other):
-        ##print('add')
         self.elements.append(other)
         return self.elements
 
     def subtracted_by(self, other):
-        ##print('subbed_by')
         if isinstance(other, Number):
             try:
                 self.elements.pop(other.value)
@@ -171,15 +168,17 @@ class List(Value):
             return None
 
     def multiplied_by(self, other):
-        ##print('multed_by')
         if isinstance(other, List):
-            self.elements.extend(other.elements)
+            index = other.elements[0].value
+            if len(self.elements) < index:
+                self.elements.append(other.elements[1])
+            else:
+                self.elements[index] = other.elements[1]
             return self.elements
         else:
             return None
 
     def divided_by(self, other):
-        ##print('dived_by')
         if isinstance(other, Number):
             try:
                 return self.elements[other.value]
@@ -247,77 +246,47 @@ class Function(Value):
 
 def visit(node:Node,symbol_table:SymbolTable) -> any:
     if isinstance(node,NumberNode):
-        #print(node , 'visit_NumberNode')
         return visit_NumberNode(node,symbol_table)
     elif isinstance(node,BinOpNode):
-        #print(node , 'visit_BinOpNode')
         return visit_BinOpNode(node,symbol_table)
-    elif isinstance(node, UnaryOpNode):
-        #print(node , 'visit_UnaryOpNode')
-       
+    elif isinstance(node, UnaryOpNode):       
         return visit_UnaryOpNode(node,symbol_table)
     elif isinstance(node, VarAccesNode):
-        #print(node, 'visit_VarAccesNode')
         return visit_VarAccesNode(node,symbol_table)
     elif isinstance(node, VarAssignNode):
-        #print(node, 'visit_VarAssignNode')
-
         return visit_VarAssignNode(node,symbol_table)
     elif isinstance(node, IfNode):
-        #print(node , 'visit_IfNode')
-
         return visit_IfNode(node,symbol_table)
     elif isinstance(node, ForNode):
-        #print(node , 'visit_ForNode')
-       
         return visit_ForNode(node,symbol_table)
     elif isinstance(node, WhileNode):
-        #print(node , 'visit_WhileNode')
-
         return visit_WhileNode(node,symbol_table)
     elif isinstance(node, FuncDefNode):
-        #print(node , 'visit_FuncDefNode')
-
         return visit_FuncDefNode(node,symbol_table)
     elif isinstance(node, CallNode):
-        #print(node , ' visit_CallNode')
-
         return visit_CallNode(node,symbol_table)
     elif isinstance(node, ListNode):
-        #print(node , 'visit_ListNode')
-
         return visit_ListNode(node,symbol_table, 0, [])
-    elif isinstance(node, ReturnNode):
-        #print(node , 'visit_ReturnNode')
-
-        return visit_ReturnNode(node,symbol_table)
+    elif isinstance(node, DestinationNode):
+        return visit_DestinationNode(node,symbol_table)
     elif isinstance(node, PrintNode):
-        #print(node , 'visit_PrintNode')
-
         return visit_PrintNode(node,symbol_table)
     elif node == None:
         return None, symbol_table
 
-def no_visit_method(node: Node):
-    raise Exception(f'No visit_{type(node).__name__} method defined{node}')
-
 def visit_NumberNode(node: Node,symbol_table:SymbolTable):
-    #print(node.tok.value)
     return Number(node.tok.value), symbol_table
 
 def visit_BinOpNode(node: Node,symbol_table:SymbolTable):
     left:Number or Value
     right:Number or Value
-    # ##print('TEST',node.left_node, node.right_node)
-    #print("NONONONONONO",node)
+
     left, symbol_table_1 = visit(node.left_node,symbol_table)
     if symbol_table_1.should_return: return left, symbol_table_1
 
     right,symbol_table_2= visit(node.right_node,symbol_table_1)
     if symbol_table_2.should_return: return right, symbol_table_2
 
-    # ##print(left,right)
-    # ##print(type(left),type(right))
     if node.op_tok.type == TokenTypes.TT_PLUS:
         return left.added_to(right), symbol_table_2
     elif node.op_tok.type == TokenTypes.TT_MINUS:
@@ -368,8 +337,8 @@ def visit_VarAccesNode(node: Node,symbol_table:SymbolTable):
 
 def visit_VarAssignNode(node: Node,symbol_table:SymbolTable):
     value, symbol_table_1 = visit(node.value_node, symbol_table)
-    if symbol_table_1.should_return: return "ASSIGN", symbol_table_1
-    return "ASSIGN", symbol_table_1.insert(node.var_name_tok.value, value)
+    if symbol_table_1.should_return: return value, symbol_table_1
+    return value, symbol_table_1.insert(node.var_name_tok.value, value)
 
 def visit_IfNode(node: Node, symbol_table:SymbolTable):
     condition, symbol_table_1 = IfNode_loop(node, symbol_table)
@@ -460,7 +429,6 @@ def visit_CallNode(node:Node=Node(), symbol_table:SymbolTable=SymbolTable()):
     value_to_call, symbol_table_1 = visit(node.node_to_call, symbol_table)
     if symbol_table_1.should_return: return value_to_call, symbol_table_1
     args, symbol_table_2 = call_loop(node, symbol_table_1,0,[])
-    # ##print(node.node_to_call)
     return value_to_call.execute(args,symbol_table_2)
 
 def call_loop(node:Node=Node(), symbol_table:SymbolTable=SymbolTable(), idx:int=0, args:list=[]):
@@ -472,10 +440,9 @@ def call_loop(node:Node=Node(), symbol_table:SymbolTable=SymbolTable(), idx:int=
     args.append(visitted)
     return call_loop(node, symbol_table_1, idx+1, args)
     
-def visit_ReturnNode(node:Node=Node(), symbol_table:SymbolTable=SymbolTable()):
+def visit_DestinationNode(node:Node=Node(), symbol_table:SymbolTable=SymbolTable()):
     if node.node_to_return:
         value, symbol_table_1 = visit(node.node_to_return, symbol_table)
-        ##print(value)
         if symbol_table_1.should_return: return value, symbol_table_1
         symbol_table_1.should_return = True
         return value, symbol_table_1
@@ -489,9 +456,6 @@ def get_case(cases:list = [], idx:int = 0):
 
 def run(fn: str = '', text: str = '', symbol_table:SymbolTable= SymbolTable()):
     ast = myParser.run(fn, text)
-    print('AST:',ast)
     if ast == None: return None, None, symbol_table
     result, new_symbol_table = interpreter(ast, symbol_table)
-    
-    # ##print('SYMBOL_TABLE:', new_symbol_table, 'RESULT:',result)
     return result, None, new_symbol_table

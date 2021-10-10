@@ -1,5 +1,5 @@
 VEHICLE i travels 0
 
-FOR i travels 0 TO 10 THEN
+DRIVING i travels 0 TO 10 GPS
     PRINT(i)
-END
+REFUEL

@@ -1,4 +1,4 @@
-# use the hashtag for comments
-IF 2 travels travels 2 THEN
+# Use the hashtag for comments
+TRAFFIC 2 travels travels 2 GPS
 # like this
         PRINT(100)

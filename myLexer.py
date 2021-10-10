@@ -93,19 +93,17 @@ class TokenTypes():
         'AND', 
         'OR', 
         'NOT', 
-        'IF',       # Jam
-        'THEN',     # Flee
-        'ELIF',     # Alternate
-        'ELSE',     # Unjam
-        'FOR',      # GPS
-        'TO',       # To
-        'STEP',     # Speed
-        'WHILE',     # Wait
-        'ROUTE',     # Function
-        'END',
-        'RETURN',
-        'CONTINUE',
-        'BREAK',
+        'TRAFFIC',       
+        'GPS',     
+        'BYPASS',    
+        'FLEE',    
+        'DRIVING',      
+        'TO',       
+        'STEP',     
+        'SPEEDING',    
+        'ROUTE',     
+        'REFUEL',
+        'DESTINATION',
         'PRINT',
         ]
 
@@ -244,6 +242,4 @@ def get_curr_char(text:str='', curr_pos:Position = Position()) -> str or None:
 def run(fn:str='', text:str=''):
     tokens, error = make_tokens([], Position(0, 0, 0, fn, text), text)
     if error: return None, error
-    # print(tokens)
     return clean_tokens(tokens), error
-    # return tokens, error

@@ -4,3 +4,9 @@
 PRINT(1)
 VEHICLE a travels 4
 PRINT(a)
+PRINT([1,2,3])
+ROUTE add(a); 
+    DESTINATION a + 1
+REFUEL
+PRINT(add)
+PRINT(add(2))
