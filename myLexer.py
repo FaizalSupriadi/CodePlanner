@@ -13,12 +13,18 @@ class Error:
         result += f'File {self.pos_start.fn}, line {self.pos_start.ln + 1}'
         return result
 
+    def __repr__(self) -> str:
+        return f'{self.pos_start}{self.pos_end}{self.error_name}{self.details}'
 class IllegalCharError(Error):
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Illegal Character', details)
+    def __repr__(self) -> str:
+        return f'{self.pos_start}{self.pos_end}{self.details}'
 class InvalidSyntaxError(Error):
-		def __init__(self, pos_start, pos_end, details=''):
-				super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
+    def __init__(self, pos_start, pos_end, details=''):
+        super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
+    def __repr__(self) -> str:
+        return f'{self.pos_start}{self.pos_end}{self.details}'
                 
 class Position:
     def __init__(self, idx=0, ln=0, col=0, fn='', ftxt=''):
@@ -35,7 +41,7 @@ class Position:
     
     def __repr__(self) -> str:
         return f'{self.idx}{self.ln}{self.col}'
-
+    # (self, current_char:str=None) -> Position
     def advance(self, current_char:str=None):
         self.prevIdx = self.idx
         self.prevLn = self.ln
@@ -49,14 +55,16 @@ class Position:
             self.col = 0
 
         return self
-
-    def goTo(self, idx):
+    # (self, idx:int = 0) -> Position
+    def goTo(self, idx:int = 0):
         self.idx = idx
         return self
-    
+
+    # (self) -> Position
     def copyPrev(self):
         return Position(self.prevIdx, self.prevLn, self.prevCol, self.fn, self.ftxt)
 
+    # (self) -> Position
     def copy(self):
         return Position(self.idx, self.ln, self.col, self.fn, self.ftxt)
 
@@ -113,10 +121,10 @@ class Token:
         self.type = type_
         self.value = value
     
-    def matches(self, type_, value_):
+    def matches(self, type_:TokenTypes, value_:TokenTypes) -> bool:
         return self.type == type_ and self.value == value_
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.value: return f'{self.type}:{self.value}'
         return f'{self.type}'
 
@@ -128,6 +136,7 @@ def add_token(token:Token, pos:Position, tokens:list) -> Tuple[List[Token], Posi
     tokens.append(token)
     return tokens, pos
 
+# Will read through the given text and generate a token list
 def make_tokens(tokens:list, curr_pos:Position, text:str) -> Tuple[list, Error]:
     curr_char = get_curr_char(text, curr_pos)
     if curr_char == None:
@@ -171,16 +180,18 @@ def make_tokens(tokens:list, curr_pos:Position, text:str) -> Tuple[list, Error]:
         tokens.append(Token(TokenTypes.TT_SEMICOLON))
 
     return make_tokens(tokens, curr_pos.advance(curr_char), text) 
-    
+
+# Will remove None type tokens from list
 def clean_tokens(tokens=[]) -> List[Token]:
     return list(filter(None, tokens))
 
-def skip_comment(curr_pos:Position = Position(),text:str = ''):
+def skip_comment(curr_pos:Position = Position(),text:str = '') -> Position:
     char = get_curr_char(text, curr_pos)
     if char != "\n":
         return skip_comment(curr_pos.advance(char), text)
     return curr_pos
 
+# If a letter was found this will classify it as the correct token
 def make_identifier(curr_pos:Position = Position(),text:str = '',keyword:str = '') -> Tuple[Token, Position]:
     curr_char = get_curr_char(text, curr_pos)
     if keyword != '' and keyword[0] in DIGITS:
@@ -206,6 +217,7 @@ def make_identifier(curr_pos:Position = Position(),text:str = '',keyword:str = '
     else:
         return Token(TokenTypes.TT_KEYWORD if keyword in TokenTypes.KEYWORDS else TokenTypes.TT_IDENTIFIER, keyword), curr_pos
 
+# If an equal character was found, check if the next character gives it a different token meaning
 def make_equals(curr_pos:Position = Position(), text:str='') -> Tuple[Token, Position]:
     curr_char = get_curr_char(text, curr_pos)
     token, new_pos = make_identifier(curr_pos.advance(curr_char),text)
@@ -221,7 +233,8 @@ def make_equals(curr_pos:Position = Position(), text:str='') -> Tuple[Token, Pos
         return Token(TokenTypes.TT_NE), new_pos
     else:
         return Token(TokenTypes.TT_EQ), curr_pos
-    
+
+# Create a token whether an int or float is given
 def make_number(curr_pos:Position = Position(), text:str='', num_str:str = '', dot_count:int = 0 ) -> Tuple[Token, Position]:
     curr_char = get_curr_char(text, curr_pos)
     if curr_char != None and curr_char in DIGITS + '.':
@@ -239,7 +252,8 @@ def make_number(curr_pos:Position = Position(), text:str='', num_str:str = '', d
 def get_curr_char(text:str='', curr_pos:Position = Position()) -> str or None:
     return text[curr_pos.idx] if curr_pos.idx < len(text) else None
 
-def run(fn:str='', text:str=''):
+# Create tokens
+def run(fn:str='', text:str='') -> List[Token]:
     tokens, error = make_tokens([], Position(0, 0, 0, fn, text), text)
     if error: return None, error
     return clean_tokens(tokens), error

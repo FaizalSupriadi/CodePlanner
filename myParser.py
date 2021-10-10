@@ -1,9 +1,9 @@
 from typing import List, Tuple
-from myLexer import Token
+from myLexer import Error, Token
 from myLexer import TokenTypes
 import myLexer
 
-
+# These nodes is what the AST exists of
 class Node:
     def __init__(self, node_name='NODE') -> None:
             self.node_name = node_name
@@ -113,6 +113,7 @@ class ListNode(Node):
 
     def __repr__(self) -> str:
         return f'({self.node_name}: ELEMNODES: {self.element_nodes})'
+# Return node
 class DestinationNode(Node):
     def __init__(self, node_to_return):
         super().__init__('DESTINATIONNODE')
@@ -127,15 +128,15 @@ class PrintNode(Node):
 
     def __repr__(self) -> str:
         return f'({self.node_name}, {self.printable})'
+
+# If the current token does not match with the keyword, then execute the given function
 def not_keyword_check(tokens: List[Token] = [], idx: int = 0, keyword:str='', func: callable = None) -> Tuple[any, int]:
     if not get_curr_tok(tokens, idx).matches(TokenTypes.TT_KEYWORD, keyword):
         return None, idx
     return func(tokens, idx+1)
 
-def parse(tokens: List[Token] = []) -> any:
-    return statements(tokens)
-
-def statements( tokens: List[Token] = [], idx: int = 0 ):
+# This will go through the token list and propels the current tokens through the ast, puts everything in a listnode at the end
+def statements( tokens: List[Token] = [], idx: int = 0 ) -> Node:
     if len(tokens) == 0: return None, 0
     statements_list = []
     _, idx_1 = if_newline(tokens, idx, 0)
@@ -144,7 +145,8 @@ def statements( tokens: List[Token] = [], idx: int = 0 ):
     statements_list_1, idx_3 = statement_loop(tokens, idx_2, statements_list)
     return ListNode(statements_list_1), idx_3
 
-def statement_loop(tokens: List[Token] = [], idx: int = 0, statements_list:list = []):
+# Keep recursing through the ast until there are no more statements
+def statement_loop(tokens: List[Token] = [], idx: int = 0, statements_list:list = []) -> Tuple[List[Node], int]:
     count, idx_1 = if_newline(tokens, idx, 0)
     if count == 0:
         return statements_list, idx_1
@@ -154,19 +156,19 @@ def statement_loop(tokens: List[Token] = [], idx: int = 0, statements_list:list 
     statements_list.append(statement)
     return statement_loop(tokens, idx_2, statements_list )
 
-def statement_keywords(tokens: List[Token] = [], idx: int = 0):
+# This will check for a return or a print node
+def  statement_keywords(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     if get_curr_tok(tokens, idx).matches(TokenTypes.TT_KEYWORD, 'DESTINATION'):
         expr, idx_1 = expression(tokens, idx+1)
         return DestinationNode(expr), idx_1
     if get_curr_tok(tokens, idx).matches(TokenTypes.TT_KEYWORD, 'PRINT'):
-        
         expr, idx_1 = expression(tokens, idx+1)
-        #print('TEST',expr,get_curr_tok(tokens, idx+1))
         return PrintNode(expr), idx_1
     expr, idx_1 = expression(tokens, idx)
     return expr, idx_1
-    
-def if_newline(tokens: List[Token] = [], idx: int = 0, count:int = 0):
+
+# If ; or \n is seen it's a newline token, we want to skip that
+def if_newline(tokens: List[Token] = [], idx: int = 0, count:int = 0) -> Tuple[int, int]:
     curr_tok:Token = get_curr_tok(tokens, idx)
     if curr_tok.type == None:
         return 0, idx
@@ -175,7 +177,18 @@ def if_newline(tokens: List[Token] = [], idx: int = 0, count:int = 0):
 
     return count, idx
 
-def func_def_if(tokens: List[Token] = [], idx: int = 0, curr_tok:Token=Token()):
+# This will define the function node
+def func_def(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
+    if not get_curr_tok(tokens, idx).matches(TokenTypes.TT_KEYWORD, 'ROUTE'):
+        return None, idx
+    curr_tok:Token = get_curr_tok(tokens, idx+1)
+    if curr_tok.type == TokenTypes.TT_IDENTIFIER:
+        return func_def_if(tokens, idx+2, curr_tok)
+    else:
+        return func_def_else(tokens, idx+1, curr_tok)
+
+# If there is an function name we want to go through this function to remember the name
+def func_def_if(tokens: List[Token] = [], idx: int = 0, curr_tok:Token=Token()) -> Tuple[Node, int]:
     if get_curr_tok(tokens, idx).type != TokenTypes.TT_LPAREN:
         return None, idx
     curr_tok_1:Token = get_curr_tok(tokens, idx+1)
@@ -190,7 +203,8 @@ def func_def_if(tokens: List[Token] = [], idx: int = 0, curr_tok:Token=Token()):
             return None, idx+1
         return func_def_colon(tokens, idx+2, curr_tok,[])
 
-def func_def_else(tokens: List[Token] = [], idx: int = 0, curr_tok:Token=Token()):
+# If there is no function name it's an anonymous function and has to go through this function
+def func_def_else(tokens: List[Token] = [], idx: int = 0, curr_tok:Token=Token()) -> Tuple[Node, int]:
     if get_curr_tok(tokens, idx) != TokenTypes.TT_LPAREN:
             return None, idx
     curr_tok_1:Token = get_curr_tok(tokens, idx+2)
@@ -203,19 +217,9 @@ def func_def_else(tokens: List[Token] = [], idx: int = 0, curr_tok:Token=Token()
         if get_curr_tok(tokens, idx+2).type != TokenTypes.TT_RPAREN:
             return None, idx+2
         return func_def_colon(tokens, idx+2, curr_tok,[])
-            
 
-def func_def(tokens: List[Token] = [], idx: int = 0) -> Tuple[any, int]:
-    if not get_curr_tok(tokens, idx).matches(TokenTypes.TT_KEYWORD, 'ROUTE'):
-        return None, idx
-    curr_tok:Token = get_curr_tok(tokens, idx+1)
-    if curr_tok.type == TokenTypes.TT_IDENTIFIER:
-        return func_def_if(tokens, idx+2, curr_tok)
-    else:
-        return func_def_else(tokens, idx+1, curr_tok)
-     
-
-def func_def_colon(tokens: List[Token] = [], idx: int = 0, var_name:Token=Token(),arg_list:list=[]):
+# Defines what the function does
+def func_def_colon(tokens: List[Token] = [], idx: int = 0, var_name:Token=Token(),arg_list:list=[]) -> Tuple[Node, int]:
     if get_curr_tok(tokens, idx).type == TokenTypes.TT_COLON:
         body, idx_1 = expression(tokens, idx+1)
         return FuncDefNode(var_name, arg_list ,body, False), idx_1
@@ -227,7 +231,8 @@ def func_def_colon(tokens: List[Token] = [], idx: int = 0, var_name:Token=Token(
         return None, idx_1
     return FuncDefNode(var_name, arg_list ,body, True), idx_1+1
 
-def func_def_inputs(tokens: List[Token] = [], idx: int = 0, arg_name_toks:list=[]):
+# The arguments given to the function will be defined here
+def func_def_inputs(tokens: List[Token] = [], idx: int = 0, arg_name_toks:list=[]) -> Tuple[list, int]:
     if get_curr_tok(tokens, idx).type == TokenTypes.TT_COMMA:
         curr_tok:Token = get_curr_tok(tokens, idx+1)
         if curr_tok.type != TokenTypes.TT_IDENTIFIER:
@@ -237,7 +242,8 @@ def func_def_inputs(tokens: List[Token] = [], idx: int = 0, arg_name_toks:list=[
     else:
         return arg_name_toks, idx
 
-def call(tokens: List[Token] = [], idx: int = 0):
+# This will return a callnode with the function that needs to be called
+def call(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
 
     fact, idx_1 = factor(tokens, idx)
     if get_curr_tok(tokens, idx_1).type == TokenTypes.TT_LPAREN:
@@ -251,13 +257,15 @@ def call(tokens: List[Token] = [], idx: int = 0):
             return CallNode(fact, arg_nodes), idx_3+1
     return fact, idx_1
 
-def args_inputs(tokens: List[Token] = [], idx: int = 0, arg_nodes:list = []):
+# The arguments given to the function will be defined here
+def args_inputs(tokens: List[Token] = [], idx: int = 0, arg_nodes:list = []) -> Tuple[list, int]:
     if get_curr_tok(tokens, idx).type == TokenTypes.TT_COMMA:
         expr, idx_1 = expression(tokens, idx+1)
         arg_nodes.append(expr)
         return args_inputs(tokens, idx_1, arg_nodes)
     return arg_nodes, idx
 
+# This will create the for loop node, it will have to check what the range and steps are
 def for_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     curr_tok: Token = get_curr_tok(tokens, idx)
     if not curr_tok.matches(TokenTypes.TT_KEYWORD, 'DRIVING'):
@@ -289,6 +297,7 @@ def for_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
         body, idx_3 = statements(tokens, idx_2+1)
         return ForNode(curr_tok_1, start_value, end_value, None, body, False), idx_3
 
+# This will create the while node
 def while_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     condition, idx_1 = not_keyword_check(tokens, idx, 'SPEEDING', expression)
     if not get_curr_tok(tokens, idx_1).matches(TokenTypes.TT_KEYWORD, 'GPS'):
@@ -303,14 +312,15 @@ def while_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     body, idx_2 = statement_keywords(tokens, idx_1)
     return WhileNode(condition, body, False), idx_2
 
-
+# This function will return the ifnode
 def if_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
 
     cases, else_case, idx_1 = if_expr_cases(tokens, idx, 'TRAFFIC')
 
     return IfNode(cases, else_case), idx_1
 
-def if_expr_cases(tokens: List[Token] = [], idx: int = 0, keyword:str=''):
+# This will fill the cases and else cases with their respective statements
+def if_expr_cases(tokens: List[Token] = [], idx: int = 0, keyword:str='') -> Tuple[list, list, int]:
 
     cases = []
     else_case = None
@@ -343,8 +353,8 @@ def if_expr_cases(tokens: List[Token] = [], idx: int = 0, keyword:str=''):
         cases.extend(new_cases)
         return cases, else_case, idx_3
 
-
-def if_expr_or(tokens: List[Token] = [], idx: int = 0):
+# this will decide whether there is an elif or else
+def if_expr_or(tokens: List[Token] = [], idx: int = 0) -> Tuple[list, list, int] :
 
     cases, else_case = [], None
     if get_curr_tok(tokens, idx).matches(TokenTypes.TT_KEYWORD, 'BYPASS'):
@@ -354,11 +364,12 @@ def if_expr_or(tokens: List[Token] = [], idx: int = 0):
         else_case, idx_1 = if_expr_else(tokens, idx)
         return cases, else_case, idx_1
 
-def if_expr_elif(tokens: List[Token] = [], idx: int = 0):
-
+# If there is an elif go to if_expr_cases to fill its case and else_cases
+def if_expr_elif(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     return if_expr_cases(tokens, idx,'BYPASS')
 
-def if_expr_else(tokens: List[Token] = [], idx: int = 0):
+# If there is an else fill the else_case with its statements
+def if_expr_else(tokens: List[Token] = [], idx: int = 0) -> Tuple[list, int]:
     else_case = None
     if get_curr_tok(tokens, idx).matches(TokenTypes.TT_KEYWORD, 'FLEE'):
 
@@ -372,20 +383,8 @@ def if_expr_else(tokens: List[Token] = [], idx: int = 0):
         else_case = (expr, False)
         return else_case, idx_1
 
-def if_expr_loop(tokens, idx, cases=[]) -> Tuple[Node, int]:
-
-    curr_tok: Token = get_curr_tok(tokens, idx)
-    if curr_tok.matches(TokenTypes.TT_KEYWORD, 'BYPASS'):
-        condition, idx_1 = expression(tokens, idx+1)
-        expr, idx_2 = not_keyword_check(tokens, idx_1, 'GPS', expression)
-        cases.append((condition, expr))
-        return if_expr_loop(tokens, idx_2, cases)
-    elif curr_tok.matches(TokenTypes.TT_KEYWORD, 'FLEE'):
-        else_case, idx_2 = expression(tokens, idx + 1)
-        return IfNode(cases, else_case), idx_2
-    return IfNode(cases, []), idx
-
-def list_expr(tokens: List[Token] = [], idx: int = 0):
+# This will create the list node
+def list_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     element_nodes = []
 
     if get_curr_tok(tokens, idx).type != TokenTypes.TT_LSQUARE:
@@ -398,9 +397,9 @@ def list_expr(tokens: List[Token] = [], idx: int = 0):
         element_nodes_1, idx_2 = args_inputs(tokens, idx_1, element_nodes)
         if get_curr_tok(tokens, idx_2).type != TokenTypes.TT_RSQUARE:
             return None, idx_2
-        #print('THORUGH')
         return ListNode(element_nodes_1), idx_2+1
 
+# This checks whether there is a NOT sign and will return the unarynode if so
 def comp_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     curr_tok: Token = get_curr_tok(tokens, idx)
     if curr_tok.matches(TokenTypes.TT_KEYWORD, 'NOT'):
@@ -411,8 +410,8 @@ def comp_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
 def arith_expr(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     return bin_op_left(term, (TokenTypes.TT_PLUS, TokenTypes.TT_MINUS), tokens, idx)
 
+# If a variable matches then it must be assigned to the value, this will return the varassign node
 def expression(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
-
     curr_tok: Token = get_curr_tok(tokens, idx)
     if curr_tok.matches(TokenTypes.TT_KEYWORD, 'VEHICLE'):
         next_tok: Token = get_curr_tok(tokens, idx+1)
@@ -425,11 +424,9 @@ def expression(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
         return VarAssignNode(next_tok, expr), idx_1
     return bin_op_left(comp_expr, ((TokenTypes.TT_KEYWORD, "AND"),(TokenTypes.TT_KEYWORD, "OR")), tokens, idx)
 
-
-def term(tokens: List[Token] = [], idx: int = 0) -> tuple:
+def term(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     return bin_op_left(call, (TokenTypes.TT_MUL, TokenTypes.TT_DIV), tokens, idx)
-
-
+# This function will check whether there are keywords that match, if there are then go to their corresponding functions and return the correct node
 def factor(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     curr_tok: Token = get_curr_tok(tokens, idx)
 
@@ -461,12 +458,15 @@ def factor(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
         return func_def(tokens,idx)
     return None, idx
 
-
-def bin_op_left(func: callable, ops: tuple, tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]: # dit zijn hoge orde functies
+# This is the binary operator split into two function, left and right. 
+# Left will execute its given function and gives it to right
+def bin_op_left(func: callable, ops: tuple, tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     funct, i = func(tokens, idx)
     return bin_op_right(func, ops, tokens, i, funct)
-
-
+# Right will check if the current token is or is in ops, 
+# if that is the case then it will recurse until it is not
+# The result is that there is that the node can contain multiple nodes in their right value
+# Which is useful for calculations
 def bin_op_right(func: callable, ops: tuple, tokens: List[Token], idx: int, left: any) -> Tuple[Node, int]:
     curr_tok: Token = get_curr_tok(tokens, idx)
     if curr_tok is None:
@@ -479,10 +479,13 @@ def bin_op_right(func: callable, ops: tuple, tokens: List[Token], idx: int, left
 def get_curr_tok(tokens:List[Token]=[], idx:int=0) -> Token:
     return tokens[idx] if idx < len(tokens) else Token()
 
-def run(fn: str = '', text: str = '') -> Node:
+def parse(tokens: List[Token] = []) -> any:
+    return statements(tokens)
+
+def run(fn: str = '', text: str = '') -> Tuple[Node, Error]:
     tokens, error = myLexer.run(fn, text)
     if error:
         return None, error
     ast, _ = parse(tokens)
 
-    return ast
+    return ast, error

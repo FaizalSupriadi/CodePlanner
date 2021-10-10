@@ -5,10 +5,12 @@ class Clock:
         self.name = name
         self.seconds = seconds
 
+    # (self) -> Clock
     def time(self):
         return Clock(self.name, time.time() )
 
-    def compare_time(self, other):
+    #(self, other: Clock) 
+    def compare_time(self, other) -> str:
         seconds = self.seconds - other.seconds
         return f'{self.name}: {seconds} seconds'
 
@@ -17,7 +19,6 @@ class Clock:
         # type quit to see the time
         func(*args)
         print(Clock('RunTime').time().compare_time(clock))
-
 
     def __repr__(self) -> str:
         return f'{self.name}: {self.seconds} seconds'

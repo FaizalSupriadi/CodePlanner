@@ -62,7 +62,36 @@ b) [PrintNode] in [myParser] op regel [136] c) [visit_PrintNode] in [myInterpret
 [Comments support in taal] geïmplementeerd door middel van de volgende functies: a) [skip_comment] in [myLexer] op regel [180]
 
 [Extra functionaliteit overlegd met docent, goedkeuring: datum e-mail; overeengekomen max. aantal punten: X]
-
+# AST
+Statements           
+v                           v
+statement_keywords  < statement_loop 
+v
+expression  > return Print or Return Node
+v
+expression > return VarAssignNode
+v
+bin_op_left
+V
+comp_expr
+v
+bin_op_left
+v
+arith_expr
+v
+bin_op_left
+v
+term
+v
+bin_op_left
+v
+call > return CallNode
+v
+Factor
+v                   v               v                   v                   v                     v               v           v
+list_expr           if_expr         for_expr            while_expr          func_def             factor         expression  Varacces/number
+v                   v               v                   v                      v                    v               v       -node
+ret List node       ret if node     ret for node        ret while node      ret funcdef node     ret unarynode    ret node
 # LANGUAGE
 
 
