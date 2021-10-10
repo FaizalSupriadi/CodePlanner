@@ -9,25 +9,21 @@ https://softwareengineering.stackexchange.com/questions/315919/how-is-brainfuck-
 Mijn taal ondersteund Conditional branching zoals if, else en elif. Dit is mogelijk in alle Turing-complete talen. 
 
 Daarnaast ondersteund deze taal while loops, for loops en ook recursie, waardoor er oneindig veel iteraties of willekeurig veel eindige iteraties zijn. 
-Zoals ixrec zegt: "Most Brainfuck implementations arguably fail the memory criteria, but that argument applies to all programming languages since in the real world computers always have finite memory."
 
+Zoals ixrec zegt: "Most Brainfuck implementations arguably fail the memory criteria, but that argument applies to all programming languages since in the real world computers always have finite memory."
 Mijn taal heeft dus ook het probleem dat computers maar een eindig geheugen hebben, maar zoals gezegd kan dit argument op alle programmeer talen gelden.
 Verder kan deze taal menselijke input binnenkrijgen en deze taal kan ook niet het halt probleem oplossen doordat er een paradox onstaat.
 
-Door deze redenen is mijn taal Turing Compleet.
-
-Any Turing-complete language can be used to write a program that requires infinte memory or an arbitrarily large amount of memory.
-De code is geschreven in functionele stijl.
+Doordat mijn taal deze criteria bevat, kan ik dus zeggen dat deze taal Turing Compleet is.
 
 # Taal Gebruik
-Om de voorbeelden te runnen moet shell.py gestart worden, daarna moet men een pad naam geven van het gewenste file. bv: "python ATP/shell.py" en dan bijvoorbeeld RUN("for_loop.traffic")
+Om de voorbeelden te runnen moet shell.py gestart worden, daarna moet men een pad naam geven van het gewenste file. bv: "python ATP/shell.py" en dan bijvoorbeeld RUN("for_loop.traffic"). Met PRINT() kan men dan variabelen etc lezen.
+
+# Must Haves
 
 For Loops Voorbeeld: [for_loop.traffic] - [Hele file]
 
 While Loops Voorbeeld: [while_loop.traffic] - [Hele file]
- 
-
-# Must Haves
 
 Classes met inheritance: bijvoorbeeld [myParser.py] - [7 - 136]
 
@@ -68,8 +64,7 @@ b) [PrintNode] in [myParser] op regel [136] c) [visit_PrintNode] in [myInterpret
 [Extra functionaliteit overlegd met docent, goedkeuring: datum e-mail; overeengekomen max. aantal punten: X]
 
 # LANGUAGE
-false = RED
-true = GREEN
+
 
 ## Symbols
 De + - * / kunnen nog wel gebruikt worden met die tekens, andere symbolen niet.
@@ -95,6 +90,9 @@ De + - * / kunnen nog wel gebruikt worden met die tekens, andere symbolen niet.
 '!' = NOT
 
 ## Keywords
+false = RED
+
+true = GREEN
 
 return = DESTINATION
 
