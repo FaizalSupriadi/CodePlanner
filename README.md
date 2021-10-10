@@ -55,11 +55,25 @@ Functie resultaat wordt op de volgende manier weergegeven: Er is een ingebouwde 
 
 Interpreter-functionaliteit (should/could-have):
 
-[PRINT functie] geïmplementeerd door middel van de volgende functies:  a) [statement_keywords] in [myParser] op regel [173]
-b) [PrintNode] in [myParser] op regel [136] c) [visit_PrintNode] in [myInterpreter] op regel [357]
+[PRINT functie] geïmplementeerd door middel van de volgende functies:  
 
+a) [statement_keywords] in [myParser] op regel [160]
 
-[Comments support in taal] geïmplementeerd door middel van de volgende functies: a) [skip_comment] in [myLexer] op regel [180]
+b) [PrintNode] in [myParser] op regel [124] 
+
+c) [visit_PrintNode] in [myInterpreter] op regel [362]
+
+[Comments support in taal] geïmplementeerd door middel van de volgende functies: 
+
+a) [skip_comment] in [myLexer] op regel [188]
+
+[List support] geïmplementeerd door middel van de volgende functies: 
+
+a) [ListNode] in [myParser] op regel [109] 
+
+b) [list_expr] in [myParser] op regel [387]
+
+c) [visit_ListNode] in [myInterpreter] op regel [444]
 
 [Extra functionaliteit overlegd met docent, goedkeuring: datum e-mail; overeengekomen max. aantal punten: X]
 # AST
