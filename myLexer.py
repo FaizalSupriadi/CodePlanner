@@ -97,7 +97,7 @@ class TokenTypes():
     TT_NEWLINE		= 'NEWLINE'
     TT_EOF          = 'EOF'
     KEYWORDS = [
-        'VEHICLE', # Variable maybe route?
+        'VEHICLE',
         'AND', 
         'OR', 
         'NOT', 
@@ -143,7 +143,7 @@ def make_tokens(tokens:list, curr_pos:Position, text:str) -> Tuple[list, Error]:
         return tokens, None
     if curr_char == '#':
         pos = skip_comment(curr_pos, text)
-        make_tokens(tokens, pos, text)
+        return make_tokens(tokens, pos, text)
     elif curr_char in ' \t':
         pass
     elif curr_char in ';\n':

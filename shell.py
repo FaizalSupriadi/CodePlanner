@@ -1,7 +1,7 @@
 
 from myLexer import Error
 import myInterpreter
-from myInterpreter import SymbolTable, Number, List,Function
+from myInterpreter import SymbolTable, Number
 from myClock import Clock
 
 
@@ -29,5 +29,6 @@ def run_script(text, symbol_table, curr_path) -> None:
     else:
         return run_shell(text, symbol_table,curr_path)
 
-symbol_table = SymbolTable().insert_static("NULL", Number.null).insert_static("GREEN", Number(1)).insert_static("RED", Number(0))
-Clock.time_this(run_script,["RUN(excercises/even_odd.traffic)", symbol_table, ''])
+if __name__ == "__main__":
+    symbol_table = SymbolTable().insert_static("NULL", Number.null).insert_static("GREEN", Number(1)).insert_static("RED", Number(0))
+    Clock.time_this(run_script,["RUN(excercises/even_odd.traffic)", symbol_table, ''])

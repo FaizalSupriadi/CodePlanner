@@ -109,6 +109,8 @@ end = REFUEL
 
 def = ROUTE
 
+var = VEHICLE
+
 for = DRIVING
 
 while = SPEEDING

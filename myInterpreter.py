@@ -109,7 +109,6 @@ class Number:
     #(self, other: Number) -> Number
     def added_to(self, other):
         if isinstance(other, Number):
-            num = Number(self.value + other.value)
             return Number(self.value + other.value)
 
     #(self, other: Number) -> Number

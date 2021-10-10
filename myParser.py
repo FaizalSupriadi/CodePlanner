@@ -463,6 +463,7 @@ def factor(tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
 def bin_op_left(func: callable, ops: tuple, tokens: List[Token] = [], idx: int = 0) -> Tuple[Node, int]:
     funct, i = func(tokens, idx)
     return bin_op_right(func, ops, tokens, i, funct)
+    
 # Right will check if the current token is or is in ops, 
 # if that is the case then it will recurse until it is not
 # The result is that there is that the node can contain multiple nodes in their right value
