@@ -1,0 +1,5 @@
+VEHICLE a travels 1
+VEHICLE c travels ROUTE add(a,b)
+    RETURN a + b
+END
+VEHICLE b travels [1,2]

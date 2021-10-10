@@ -1,0 +1,6 @@
+# PRINT can be used to print variables, numbers, functions etc.
+
+
+PRINT(1)
+VEHICLE a travels 4
+PRINT(a)

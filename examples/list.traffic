@@ -1,0 +1,2 @@
+VEHICLE a travels [1,2]
+PRINT(a)

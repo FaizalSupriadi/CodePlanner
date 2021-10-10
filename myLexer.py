@@ -134,6 +134,9 @@ def make_tokens(tokens:list, curr_pos:Position, text:str) -> Tuple[list, Error]:
     curr_char = get_curr_char(text, curr_pos)
     if curr_char == None:
         return tokens, None
+    if curr_char == '#':
+        pos = skip_comment(curr_pos, text)
+        make_tokens(tokens, pos, text)
     elif curr_char in ' \t':
         pass
     elif curr_char in ';\n':
@@ -174,7 +177,11 @@ def make_tokens(tokens:list, curr_pos:Position, text:str) -> Tuple[list, Error]:
 def clean_tokens(tokens=[]) -> List[Token]:
     return list(filter(None, tokens))
 
-    
+def skip_comment(curr_pos:Position = Position(),text:str = ''):
+    char = get_curr_char(text, curr_pos)
+    if char != "\n":
+        return skip_comment(curr_pos.advance(char), text)
+    return curr_pos
 
 def make_identifier(curr_pos:Position = Position(),text:str = '',keyword:str = '') -> Tuple[Token, Position]:
     curr_char = get_curr_char(text, curr_pos)
@@ -237,6 +244,6 @@ def get_curr_char(text:str='', curr_pos:Position = Position()) -> str or None:
 def run(fn:str='', text:str=''):
     tokens, error = make_tokens([], Position(0, 0, 0, fn, text), text)
     if error: return None, error
-    print(tokens)
+    # print(tokens)
     return clean_tokens(tokens), error
     # return tokens, error
