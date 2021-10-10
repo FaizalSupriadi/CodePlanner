@@ -25,29 +25,29 @@ For Loops Voorbeeld: [for_loop.traffic] - [Hele file]
 
 While Loops Voorbeeld: [while_loop.traffic] - [Hele file]
 
-Classes met inheritance: bijvoorbeeld [myParser.py] - [7 - 136]
+Classes met inheritance: bijvoorbeeld [myParser.py] - [7 - 124]
 
 Object-printing voor elke class: [ja]
 
-Decorator: functiedefinitie op [myClock] - [hele file], toegepast op [shell.py] - [31]
+Decorator: functiedefinitie op [myClock] - [hele file], toegepast op [shell.py] - [34]
 
 Type-annotatie: Haskell-stijl in comments: [nee]; Python-stijl in functiedefinities: [ja]
 
 Minstens drie toepassingen van hogere-orde functies:
 
-1. [myLexer.py] - [178]: Gebruik van filter om None weg te filteren
+1. [myLexer.py] - [185]: Gebruik van filter om None weg te filteren
 
-2. [myParser] - [146]: Functie 
+2. [myParser] - [133]: Functie die kijkt of de token bij de keyword past, zowel dan voert en returned die de waarden van de functie
 
-3. [myParser] - [523]
+3. [myParser] - [463] De bin_op_left functie krijgt een functie binnen die die meteen moet uitvoeren en de functie en het resultaat ervan verder moet geven aand bin_op_right
 
-4. [myParser] - [533]
+4. [myParser] - [471] De bin_op_right functie checkt of de type van de token wel bij de operations hoort, zo ja dan voert die de functie die meegegeven is uit en zal het recurseren.
 
 # Interpreter-functionaliteit Must-have:
 
 Functies: [meer per file]
 
-Functie-parameters kunnen aan de interpreter meegegeven worden door: Het is mogelijk om in de command line te schrijven. Om een functie te roepen moet men de functie naam met de parameters invullen bv: functie(args)
+Functie-parameters kunnen aan de interpreter meegegeven worden door: Het is mogelijk om in de command line te schrijven. Om een functie te roepen moet men de functie naam met de parameters invullen bv: functie(args). Daarnaast kan het ook een file lezen door RUN(file_path) te schrijven.
 
 Functies kunnen andere functies aanroepen: zie voorbeeld [excercises\even_odd.traffic] - [8]
 

@@ -3,3 +3,8 @@ VEHICLE c travels ROUTE add(a,b)
     DESTINATION a + b
 REFUEL
 VEHICLE b travels [1,2]
+
+PRINT(a)
+PRINT(c)
+PRINT(c(1,2))
+PRINT(b)
