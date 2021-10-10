@@ -1,0 +1,4 @@
+# use the hashtag for comments
+IF 2 travels travels 2 THEN
+# like this
+        PRINT(100)
