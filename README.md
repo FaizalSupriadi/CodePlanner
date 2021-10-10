@@ -3,11 +3,14 @@ Gekozen taal: Eigen Taal(CodePlanner)
 
 Turing-compleet omdat:
 Uit een stackoverflow post van Ixrec heeft hij heuristics beschreven die een taal als Turing-compleet kan zien:
+
 https://softwareengineering.stackexchange.com/questions/315919/how-is-brainfuck-turing-complete#:~:text=Conditional%20branching%20is,an%20infinite%20loop.
 
 Mijn taal ondersteund Conditional branching zoals if, else en elif. Dit is mogelijk in alle Turing-complete talen. 
+
 Daarnaast ondersteund deze taal while loops, for loops en ook recursie, waardoor er oneindig veel iteraties of willekeurig veel eindige iteraties zijn. 
 Zoals ixrec zegt: "Most Brainfuck implementations arguably fail the memory criteria, but that argument applies to all programming languages since in the real world computers always have finite memory."
+
 Mijn taal heeft dus ook het probleem dat computers maar een eindig geheugen hebben, maar zoals gezegd kan dit argument op alle programmeer talen gelden.
 Verder kan deze taal menselijke input binnenkrijgen en deze taal kan ook niet het halt probleem oplossen doordat er een paradox onstaat.
 
@@ -16,7 +19,7 @@ Door deze redenen is mijn taal Turing Compleet.
 Any Turing-complete language can be used to write a program that requires infinte memory or an arbitrarily large amount of memory.
 De code is geschreven in functionele stijl.
 
-Taal ondersteunt:
+# Taal Gebruik
 Om de voorbeelden te runnen moet shell.py gestart worden, daarna moet men een pad naam geven van het gewenste file. bv: "python ATP/shell.py" en dan bijvoorbeeld RUN("for_loop.traffic")
 
 For Loops Voorbeeld: [for_loop.traffic] - [Hele file]
@@ -24,7 +27,7 @@ For Loops Voorbeeld: [for_loop.traffic] - [Hele file]
 While Loops Voorbeeld: [while_loop.traffic] - [Hele file]
  
 
-Bevat:
+# Must Haves
 
 Classes met inheritance: bijvoorbeeld [myParser.py] - [7 - 136]
 
@@ -36,15 +39,15 @@ Type-annotatie: Haskell-stijl in comments: [nee]; Python-stijl in functiedefinit
 
 Minstens drie toepassingen van hogere-orde functies:
 
-1. [myLexer.py] - [178]
+1. [myLexer.py] - [178]: Gebruik van filter om None weg te filteren
 
-2. [myParser] - [146]
+2. [myParser] - [146]: Functie 
 
 3. [myParser] - [523]
 
 4. [myParser] - [533]
 
-Interpreter-functionaliteit Must-have:
+# Interpreter-functionaliteit Must-have:
 
 Functies: [meer per file]
 
@@ -70,25 +73,43 @@ true = GREEN
 
 ## Symbols
 De + - * / kunnen nog wel gebruikt worden met die tekens, andere symbolen niet.
-+ = and
-- = returns
-* = shortcuts
-/ = ghostrides
 
-< = less
-> = more
-== = equals
-= = travels
-!= = travels cancelled
-! = NOT
+'+' = and
 
-## Words
+'-' = returns
+
+'*' = shortcuts
+
+'/' = ghostrides
+
+'<' = less
+
+'>' = more
+
+'==' = equals
+
+'=' = travels
+
+'!=' = travels cancelled
+
+'!' = NOT
+
+## Keywords
+
 return = DESTINATION
+
 if = TRAFFIC
+
 elif = BYPASS
+
 else = FLEE
+
 then = GPS
+
 end = REFUEL
+
 def = ROUTE
+
 for = DRIVING
+
 while = SPEEDING
