@@ -63,64 +63,7 @@ b) [PrintNode] in [myParser] op regel [136] c) [visit_PrintNode] in [myInterpret
 
 [Extra functionaliteit overlegd met docent, goedkeuring: datum e-mail; overeengekomen max. aantal punten: X]
 # AST
-Statements  
-
-v                           v
-
-statement_keywords  < statement_loop 
-
-v
-
-expression  > return Print or Return Node
-
-v
-
-expression > return VarAssignNode
-
-v
-
-bin_op_left
-
-V
-
-comp_expr
-
-v
-
-bin_op_left
-
-v
-
-arith_expr
-
-v
-
-bin_op_left
-
-v
-
-term
-
-v
-
-bin_op_left
-
-v
-
-call > return CallNode
-
-v
-
-Factor
-
-v                   v               v                   v                   v                     v               v           v
-
-list_expr           if_expr         for_expr            while_expr          func_def             factor         expression  Varacces/number
-
-v                   v               v                   v                      v                    v               v       -node
-
-ret List node       ret if node     ret for node        ret while node      ret funcdef node     ret unarynode    ret node
-
+![image](https://user-images.githubusercontent.com/43231255/136706440-da27e8c7-68fd-41ca-ba8e-bfa8cc78feb9.png)
 # LANGUAGE
 
 
