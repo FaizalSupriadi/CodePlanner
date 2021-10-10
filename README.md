@@ -1,4 +1,4 @@
-# ATP
+# CodePlanner
 Gekozen taal: Eigen Taal(CodePlanner)
 
 Turing-compleet omdat:
