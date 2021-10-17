@@ -14,11 +14,13 @@ class Clock:
         seconds = self.seconds - other.seconds
         return f'{self.name}: {seconds} seconds'
 
-    def time_this(func:callable, args:list=[]):
-        clock = Clock().time()
-        # type quit to see the time
-        func(*args)
-        print(Clock('RunTime').time().compare_time(clock))
+    def time_this(func:callable):
+        def wrapper(*args):
+            clock = Clock().time()
+            result = func(*args)
+            print(Clock('RunTime').time().compare_time(clock))
+            return result
+        return wrapper
 
     def __repr__(self) -> str:
         return f'{self.name}: {self.seconds} seconds'

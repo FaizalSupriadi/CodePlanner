@@ -2,6 +2,7 @@ from typing import Tuple
 from myLexer import Error
 import myParser
 from myParser import TokenTypes,DestinationNode,CallNode,ListNode, PrintNode,FuncDefNode, BinOpNode, NumberNode, UnaryOpNode, Node, VarAccesNode, VarAssignNode, IfNode,ForNode, WhileNode
+from myClock import Clock
 
 
 # The symbol table contains all the variables or functions that have been made
@@ -501,7 +502,8 @@ def get_case(cases:list = [], idx:int = 0) -> list:
 def interpreter(ast:list=[], symbol_table:SymbolTable = SymbolTable()) -> Tuple[any, SymbolTable]:
     res, new_symbol_table = visit(ast, symbol_table)
     return res, new_symbol_table
-
+    
+@Clock.time_this
 def run(fn: str = '', text: str = '', symbol_table:SymbolTable= SymbolTable()) -> Tuple[any, Error, SymbolTable]:
     ast, error = myParser.run(fn, text)
     if ast == None: return None, error, symbol_table

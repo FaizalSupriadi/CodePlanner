@@ -4,7 +4,6 @@ import myInterpreter
 from myInterpreter import SymbolTable, Number
 from myClock import Clock
 
-
 def run_shell(text, symbol_table:SymbolTable= SymbolTable(),curr_path:str='') -> None:
     if text == 'quit':
         return
@@ -31,4 +30,4 @@ def run_script(text, symbol_table, curr_path) -> None:
 
 if __name__ == "__main__":
     symbol_table = SymbolTable().insert_static("NULL", Number.null).insert_static("GREEN", Number(1)).insert_static("RED", Number(0))
-    Clock.time_this(run_script,["RUN(excercises/even_odd.traffic)", symbol_table, ''])
+    run_script("RUN(excercises/even_odd.traffic)", symbol_table, "")
