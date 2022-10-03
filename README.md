@@ -82,7 +82,7 @@ c) [visit_ListNode] in [myInterpreter] op regel [444]
 
 
 ## Symbols
-De + - * / kunnen nog wel gebruikt worden met die tekens, andere symbolen niet.
+De + - * / kunnen als tekens of als woorden geschreven worden, andere symbolen niet.
 
 '+' = and
 
