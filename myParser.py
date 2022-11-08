@@ -488,5 +488,4 @@ def run(fn: str = '', text: str = '') -> Tuple[Node, Error]:
     if error:
         return None, error
     ast, _ = parse(tokens)
-
     return ast, error

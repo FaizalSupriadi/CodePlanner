@@ -96,7 +96,7 @@ De + - * / kunnen als tekens of als woorden geschreven worden, andere symbolen n
 
 '>' = more
 
-'==' = equals
+'==' = equals of travels travels
 
 '=' = travels
 
