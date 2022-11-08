@@ -1,0 +1,13 @@
+ROUTE check(n)
+    TRAFFIC n travels travels 2 GPS
+        PRINT(100)
+    BYPASS n travels travels 3 GPS
+        PRINT(200)
+    FLEE
+        PRINT(300)
+    REFUEL
+
+    check(2)
+    check(3)
+    check(4)
+REFUEL
