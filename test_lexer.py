@@ -48,26 +48,7 @@ class TestLexer(unittest.TestCase):
             self.assertEqual(tokens[i].type, types[i])
             self.assertEqual(tokens[i].value, values[i])
 
-    #Test to check functionality with "math.traffic" script
-    def test_math(self):
-        # Create tokens from function
-        with open("tests/test_math.traffic", "r") as f:
-            text = f.read()
-        tokens, _ = lex.make_tokens([], lex.Position(0, 0, 0, "functions", text), text)
-        
-        # All script token types
-        types = [tt.TT_KEYWORD, tt.TT_LPAREN, tt.TT_INT, tt.TT_PLUS, tt.TT_INT, tt.TT_RPAREN, tt.TT_NEWLINE, tt.TT_KEYWORD, tt.TT_LPAREN, tt.TT_INT, tt.TT_MINUS, 
-            tt.TT_INT, tt.TT_RPAREN, tt.TT_NEWLINE, tt.TT_KEYWORD, tt.TT_LPAREN, tt.TT_INT, tt.TT_DIV, tt.TT_INT, tt.TT_RPAREN, tt.TT_NEWLINE, 
-            tt.TT_KEYWORD, tt.TT_LPAREN, tt.TT_INT, tt.TT_MUL, tt.TT_INT, tt.TT_RPAREN, tt.TT_NEWLINE, tt.TT_KEYWORD, tt.TT_LPAREN, tt.TT_LPAREN, tt.TT_INT, tt.TT_PLUS, 
-            tt.TT_INT, tt.TT_RPAREN, tt.TT_MUL, tt.TT_INT, tt.TT_RPAREN]
 
-        # All script token type values
-        values = ["PRINT", None, 1, None, 1, None, None, "PRINT", None, 1, None, 1, None, None, "PRINT", None, 4, None, 2, None, None, "PRINT", None, 2, None, 2, 
-        None, None, "PRINT", None, None, 3, None, 3, None, None, 3, None]
-
-        for i in range(len(tokens)):
-            self.assertEqual(tokens[i].type, types[i])
-            self.assertEqual(tokens[i].value, values[i])
 
 if __name__ == '__main__':
     unittest.main()
